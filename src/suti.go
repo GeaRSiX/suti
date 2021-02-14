@@ -1,16 +1,10 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
-type data interface{}
 type Options struct {
 	TemplatePaths   []string
 	GlobalDataPaths []string
@@ -31,8 +25,8 @@ func init() {
 
 func main() {
 	options := parseArgs(os.Args[1:])
-	d := LoadDataFiles(options.DataPaths)
-	fmt.Println(d)
+	_ = LoadDataFiles(options.DataPaths...)
+	_ = LoadDataFiles(options.GlobalDataPaths...)
 
 	return
 }
@@ -80,77 +74,6 @@ func parseArgs(args []string) (o Options) {
 			warn("unknown flag: '%s'", flag)
 			flag = ""
 		}
-	}
-
-	return
-}
-
-// LoadDataFiles TODO
-func LoadDataFiles(paths []string) map[string]data {
-	var err error
-	var stat os.FileInfo
-	var d data
-	
-	loaded := make(map[string]data)
-
-	for _, dpath := range paths {
-		if stat, err = os.Stat(dpath); err != nil {
-			warn("skipping data file '%s' (%s)", dpath, err)
-			continue
-		}
-
-		if stat.IsDir() {
-			_ = filepath.Walk(dpath,
-				func(path string, info os.FileInfo, e error) error {
-					if e == nil && !info.IsDir() {
-						if d, e = LoadDataFile(path); e == nil {
-							loaded[path] = d
-						}
-					}
-
-					if e != nil {
-						warn("unable to load data from file '%s' (%s)", path, e)
-					}
-
-					return e
-				})
-		} else {
-			if d, err = LoadDataFile(dpath); err == nil {
-				loaded[dpath] = d
-			} else {
-				warn("unable to load data from file '%s' (%s)", dpath, err)
-			}
-		}
-	}
-
-	return loaded
-}
-
-// LoadDataFile TODO
-func LoadDataFile(path string) (d data, e error) {
-	var f *os.File
-
-	f, e = os.Open(path)
-	defer f.Close()
-	if e == nil {
-		dtype := strings.TrimPrefix(filepath.Ext(path), ".")
-		d, e = LoadData(dtype, f)
-	}
-
-	return d, e
-}
-
-// LoadData TODO
-func LoadData(lang string, in io.Reader) (d data, e error) {
-	var fbuf []byte
-	if fbuf, e = ioutil.ReadAll(in); e != nil {
-		return
-	}
-
-	if lang == "json" {
-		e = json.Unmarshal(fbuf, &d)
-	} else {
-		e = fmt.Errorf("%s is not a supported data language", lang)
 	}
 
 	return
