@@ -12,59 +12,58 @@ import (
 
 type data interface{}
 
+func getDataType(path string) string {
+	return strings.TrimPrefix(filepath.Ext(path), ".")
+}
+
 // LoadDataFiles TODO
 func LoadDataFiles(paths ...string) map[string]data {
 	var err error
 	var stat os.FileInfo
 	var d data
+	var dtype string
+	var f *os.File
 
 	loaded := make(map[string]data)
 
-	for _, dpath := range paths {
-		if stat, err = os.Stat(dpath); err != nil {
-			warn("skipping data file '%s' (%s)", dpath, err)
+	for _, path := range paths {
+		if stat, err = os.Stat(path); err != nil {
+			warn("skipping data file '%s' (%s)", path, err)
 			continue
 		}
+		if f, err = os.Open(path); err != nil {
+			warn("skipping data file '%s' (%s)", path, err)
+			continue
+		}
+		defer f.Close()
 
 		if stat.IsDir() {
-			_ = filepath.Walk(dpath,
-				func(path string, info os.FileInfo, e error) error {
-					if e == nil && !info.IsDir() {
-						if d, e = LoadDataFile(path); e == nil {
-							loaded[path] = d
+			_ = filepath.Walk(path,
+				func(p string, fi os.FileInfo, e error) error {
+					if e == nil && !fi.IsDir() {
+						dtype = getDataType(p)
+						if d, e = LoadData(dtype, f); e == nil {
+							loaded[p] = d
 						}
 					}
 
 					if e != nil {
-						warn("skipping data file '%s' (%s)", path, e)
+						warn("skipping data file '%s' (%s)", p, e)
 					}
 
 					return e
 				})
 		} else {
-			if d, err = LoadDataFile(dpath); err == nil {
-				loaded[dpath] = d
+			dtype = getDataType(path)
+			if d, err = LoadData(dtype, f); err == nil {
+				loaded[path] = d
 			} else {
-				warn("skipping data file '%s' (%s)", dpath, err)
+				warn("skipping data file '%s' (%s)", path, err)
 			}
 		}
 	}
 
 	return loaded
-}
-
-// LoadDataFile TODO
-func LoadDataFile(path string) (d data, e error) {
-	var f *os.File
-
-	f, e = os.Open(path)
-	defer f.Close()
-	if e == nil {
-		dtype := strings.TrimPrefix(filepath.Ext(path), ".")
-		d, e = LoadData(dtype, f)
-	}
-
-	return d, e
 }
 
 // LoadData TODO

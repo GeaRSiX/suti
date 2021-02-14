@@ -48,27 +48,6 @@ func TestLoadDataFiles(t *testing.T) {
 	}
 }
 
-func TestLoadDataFile(t *testing.T) {
-	var e error
-	tdir := t.TempDir()
-	
-	if e = writeTestFile(tdir+"good.json", goodJson); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	if e = writeTestFile(tdir+"bad.json", badJson); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	
-	if _, e = LoadDataFile(tdir+"good.json"); e != nil {
-		t.Error(e)
-	}
-	if _, e = LoadDataFile(tdir+"bad.json"); e == nil {
-		t.Error("bad.json passed")
-	}
-	
-	return
-}
-
 func TestLoadData(t *testing.T) {
 	var e error
 	
