@@ -6,12 +6,13 @@ import (
 )
 
 type Options struct {
-	TemplatePaths   []string
-	GlobalDataPaths []string
-	DataPaths       []string
-	DataKey         string
-	SortData        string
-	ConfigFile      string
+	RootPaths        []string
+	PartialPaths     []string
+	GlobalDataPaths  []string
+	DataPaths        []string
+	DataKey          string
+	SortData         string
+	ConfigFile       string
 }
 
 var options Options
@@ -55,9 +56,10 @@ func parseArgs(args []string) (o Options) {
 			}
 
 			// set valid any flags that don't take arguments here
-
-		} else if flag == "t" || flag == "template" {
-			o.TemplatePaths = append(o.TemplatePaths, arg)
+		} else if flag == "r" || flag == "root" {
+			o.RootPaths = append(o.RootPaths, arg)
+		} else if flag == "p" || flag == "partial" {
+			o.PartialPaths = append(o.PartialPaths, arg)
 		} else if flag == "gd" || flag == "globaldata" {
 			o.GlobalDataPaths = append(o.GlobalDataPaths, arg)
 		} else if flag == "d" || flag == "data" {
