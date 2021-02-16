@@ -26,8 +26,18 @@ func init() {
 
 func main() {
 	options := parseArgs(os.Args[1:])
+	
 	_ = LoadDataFiles(options.DataPaths...)
 	_ = LoadDataFiles(options.GlobalDataPaths...)
+	
+	templates := make([]template, 0)
+	for _, r := range options.RootPaths {
+		if t, e := LoadTemplateFile(r, options.PartialPaths...); e != nil {
+			warn("unable to load templates (%s)", e)
+		} else 	{
+			templates = append(templates, t)
+		}
+	}
 
 	return
 }

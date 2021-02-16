@@ -80,7 +80,7 @@ func LoadData(lang string, in io.Reader) (d data, e error) {
 			e = fmt.Errorf("invalid json")
 		}
 	} else {
-		e = fmt.Errorf("%s is not a supported data language", lang)
+		e = fmt.Errorf("'%s' is not a supported data language", lang)
 	}
 
 	return
