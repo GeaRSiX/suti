@@ -10,21 +10,21 @@ import (
 	"strings"
 )
 
-type data interface{}
+type Data map[string]interface{}
 
 func getDataType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
 // LoadDataFiles TODO
-func LoadDataFiles(paths ...string) map[string]data {
+func LoadDataFiles(paths ...string) map[string]Data {
 	var err error
 	var stat os.FileInfo
-	var d data
+	var d Data
 	var dtype string
 	var f *os.File
 
-	loaded := make(map[string]data)
+	loaded := make(map[string]Data)
 
 	for _, path := range paths {
 		if stat, err = os.Stat(path); err != nil {
@@ -67,7 +67,7 @@ func LoadDataFiles(paths ...string) map[string]data {
 }
 
 // LoadData TODO
-func LoadData(lang string, in io.Reader) (d data, e error) {
+func LoadData(lang string, in io.Reader) (d Data, e error) {
 	var fbuf []byte
 	if fbuf, e = ioutil.ReadAll(in); e != nil {
 		return

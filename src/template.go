@@ -9,13 +9,13 @@ import (
 	hmpl "html/template"
 )
 
-type template interface{}
+type Template interface{}
 
 func getTemplateType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-func LoadTemplateFile(root string, partials ...string) (t template, e error) {
+func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
 		e = fmt.Errorf("no root template specified")
 	}

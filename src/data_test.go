@@ -9,13 +9,13 @@ import (
 const goodJson = `{"example": 1}`
 const badJson = `{"example":2:]}}`
 
-func writeTestFile(path string, data string) (e error) {
+func writeTestFile(path string, Data string) (e error) {
 	var f *os.File
 	
 	if f, e = os.Create(path); e != nil {
 		return
 	}
-	if _, e = f.WriteString(data); e != nil {
+	if _, e = f.WriteString(Data); e != nil {
 		return
 	}
 	f.Close()
@@ -26,7 +26,7 @@ func writeTestFile(path string, data string) (e error) {
 func TestLoadDataFiles(t *testing.T) {
 	var e error
 	var p []string
-	var d map[string]data
+	var d map[string]Data
 	tdir := t.TempDir()
 	
 	p = append(p, tdir+"/good.json")

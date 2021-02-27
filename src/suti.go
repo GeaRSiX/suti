@@ -30,7 +30,7 @@ func main() {
 	_ = LoadDataFiles(options.DataPaths...)
 	_ = LoadDataFiles(options.GlobalDataPaths...)
 	
-	templates := make([]template, 0)
+	templates := make([]Template, 0)
 	for _, r := range options.RootPaths {
 		if t, e := LoadTemplateFile(r, options.PartialPaths...); e != nil {
 			warn("unable to load templates (%s)", e)
