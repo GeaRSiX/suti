@@ -22,13 +22,17 @@ func init() {
 		print("nothing to do")
 		os.Exit(0)
 	}
+	
+	options = parseArgs(os.Args[1:])
+	if len(options.SortData) == 0 {
+		options.SortData = "filename"
+	}
 }
 
 func main() {
-	options := parseArgs(os.Args[1:])
 	
-	_ = LoadDataFiles(options.DataPaths...)
 	_ = LoadDataFiles(options.GlobalDataPaths...)
+	_ = LoadDataFiles(options.DataPaths...)
 	
 	templates := make([]Template, 0)
 	for _, r := range options.RootPaths {
