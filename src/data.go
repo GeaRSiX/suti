@@ -6,8 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"time"
 	"path/filepath"
 	"strings"
+	"sort"
 )
 
 type Data map[string]interface{}
@@ -48,7 +50,7 @@ func LoadDataFile(path string) (Data, error) {
 }
 
 // LoadDataFiles TODO
-func LoadDataFiles(paths ...string) map[string]Data {
+func LoadDataFiles(order string, paths ...string) []Data {
 	var err error
 	var stat os.FileInfo
 	var d Data
@@ -58,7 +60,7 @@ func LoadDataFiles(paths ...string) map[string]Data {
 	for p, path := range paths {
 		if strings.Contains(path, "*") {
 			if glob, e := filepath.Glob(path); e == nil {
-				paths = append(paths, glob...) 
+				paths = append(paths, glob...)
 				paths = append(paths[:p], paths[p+1:]...)
 			} else {
 				warn("error parsing glob '%s': %s", path, err)
@@ -83,13 +85,65 @@ func LoadDataFiles(paths ...string) map[string]Data {
 						}
 						return e
 					})
-			} else if d, err  = LoadDataFile(path); err == nil {
+			} else if d, err = LoadDataFile(path); err == nil {
 				loaded[path] = d
 			} else {
 				warn("skipping data file '%s' (%s)", path, err)
 			}
 		}
 	}
-
-	return loaded
+	
+	return sortFileData(loaded, order)
 }
+
+func sortFileData(data map[string]Data, order string) []Data {
+	sorted := make([]Data, 0, len(data))
+	
+	if order == "filename" {
+		fnames := make([]string, 0, len(data))
+		for fpath, _ := range data {
+			fnames = append(fnames, filepath.Base(fpath))
+		}
+		sort.Strings(fnames)
+		for _, fname := range fnames {
+			 for fpath, d := range data {
+				 if fname == filepath.Base(fpath) {
+					 sorted = append(sorted, d)
+				 }
+			 }
+		}
+	} else if order == "modified" {
+		stats := make(map[string]os.FileInfo)
+		for fpath, _ := range data {
+			if stat, err := os.Stat(fpath); err != nil {
+				warn("failed to stat %s (%s)", fpath, err)
+			} else {
+				stats[fpath] = stat
+			}
+		}
+		
+		modtimes := make([]time.Time, 0, len(data))
+		for _, stat := range stats {
+			modtimes = append(modtimes, stat.ModTime())
+		}
+		sort.Slice(modtimes, func(i, j int) bool {
+			return modtimes[i].Before(modtimes[j])
+		})
+		
+		for _, t := range modtimes {
+			for fpath, stat := range stats {
+				if t == stat.ModTime() {
+					sorted = append(sorted, data[fpath])
+				}
+			}
+		}
+	} else {
+		warn("unrecognised sort option '%s', data will be unsorted", order)
+		for _, d := range data {
+			sorted = append(sorted, d)
+		}
+	}
+	
+	return sorted
+}
+ 

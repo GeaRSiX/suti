@@ -6,13 +6,13 @@ import (
 )
 
 type Options struct {
-	RootPaths        []string
-	PartialPaths     []string
-	GlobalDataPaths  []string
-	DataPaths        []string
-	DataKey          string
-	SortData         string
-	ConfigFile       string
+	RootPaths       []string
+	PartialPaths    []string
+	GlobalDataPaths []string
+	DataPaths       []string
+	DataKey         string
+	SortData        string
+	ConfigFile      string
 }
 
 var options Options
@@ -22,7 +22,7 @@ func init() {
 		print("nothing to do")
 		os.Exit(0)
 	}
-	
+
 	options = parseArgs(os.Args[1:])
 	if len(options.SortData) == 0 {
 		options.SortData = "filename"
@@ -30,15 +30,18 @@ func init() {
 }
 
 func main() {
-	
-	_ = LoadDataFiles(options.GlobalDataPaths...)
-	_ = LoadDataFiles(options.DataPaths...)
-	
+
+	_ = LoadDataFiles("", options.GlobalDataPaths...)
+	d := LoadDataFiles(options.SortData, options.DataPaths...)
+	for k, v := range d {
+		fmt.Println(k, v)
+	}
+
 	templates := make([]Template, 0)
 	for _, r := range options.RootPaths {
 		if t, e := LoadTemplateFile(r, options.PartialPaths...); e != nil {
 			warn("unable to load templates (%s)", e)
-		} else 	{
+		} else {
 			templates = append(templates, t)
 		}
 	}

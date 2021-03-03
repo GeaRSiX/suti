@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	hmpl "html/template"
 	"os"
 	"path/filepath"
 	"strings"
 	tmpl "text/template"
-	hmpl "html/template"
 )
 
 type Template interface{}
@@ -27,9 +27,9 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if e != nil {
 		return
 	}
-	
+
 	ttype := getTemplateType(root)
-	
+
 	if ttype == "tmpl" || ttype == "gotmpl" {
 		var gotmpl *tmpl.Template
 		if gotmpl, e = tmpl.ParseFiles(root); e != nil {
@@ -57,6 +57,6 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	} else {
 		e = fmt.Errorf("'%s' is not a supported template language", ttype)
 	}
-	
+
 	return
 }

@@ -18,7 +18,7 @@ func TestLoadTemplateFile(t *testing.T) {
 	var e error
 	var gr, gp, br, bp []string
 	tdir := t.TempDir()
-	
+
 	gr = append(gr, tdir+"/goodRoot.tmpl")
 	if e = writeTestFile(gr[0], tmplRootGood); e != nil {
 		t.Skip("setup failure:", e)
@@ -35,7 +35,7 @@ func TestLoadTemplateFile(t *testing.T) {
 	if e = writeTestFile(bp[0], tmplPartialBad); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	
+
 	gr = append(gr, tdir+"/goodRoot.hmpl")
 	if e = writeTestFile(gr[1], hmplRootGood); e != nil {
 		t.Skip("setup failure:", e)
@@ -52,7 +52,7 @@ func TestLoadTemplateFile(t *testing.T) {
 	if e = writeTestFile(bp[1], hmplPartialBad); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	
+
 	for _, root := range gr { // good root, good partials
 		if _, e := LoadTemplateFile(root, gp...); e != nil {
 			t.Error(e)
