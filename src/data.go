@@ -162,4 +162,33 @@ func sortFileData(data map[string]Data, order string) []Data {
 	
 	return sorted
 }
+
+// GenerateSuperData TODO
+func GenerateSuperData(datakey string, d []Data, global ...Data) (superd Data) {
+	if len(datakey) == 0 {
+		datakey = "data"
+	}
+	superd = MergeData(global...)
+	
+	if superd[datakey] != nil {
+		warn("global data has a key matching the datakey ('%s')\n",
+		"this value of this key will be overwritten")
+	}
+	superd[datakey] = d
+	return
+}
  
+ // MergeData TODO
+ func MergeData(data ...Data) Data {
+	 merged := make(Data)
+	 for _, d := range data {
+		 for k, v := range d {
+			 if merged[k] == nil {
+				 merged[k] = v
+			 } else {
+				 warn("merge conflict for data key '%s'\n", k)
+			 }
+		 }
+	 }
+	 return merged
+ }
