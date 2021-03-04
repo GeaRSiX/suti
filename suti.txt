@@ -45,12 +45,12 @@ OPTIONS
     "data")
 
   -sd attribute, -sort-data attribute  
-    The file attribute to order data files by.
-    Accepted values: "filename", "modified". (default: "filename").
+    The file attribute to order data files by. If no value is provided, the data
+	will be provided in the order it's loaded.
+    Accepted values: "filename", "modified".
     A suffix can be appended to each value to set the sort order: "-asc" (for
-    ascending), "-desc" (for descending).
-    By default, the sort order will be "filename-desc".
-
+    ascending), "-desc" (for descending). If not specified, this defaults to
+	"-asc".
   -cfg file, -config file  
     A data file to provide default values for the above options (see CONFIG).
 

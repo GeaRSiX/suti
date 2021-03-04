@@ -32,10 +32,7 @@ func init() {
 func main() {
 
 	_ = LoadDataFiles("", options.GlobalDataPaths...)
-	d := LoadDataFiles(options.SortData, options.DataPaths...)
-	for k, v := range d {
-		fmt.Println(k, v)
-	}
+	_ = LoadDataFiles(options.SortData, options.DataPaths...)
 
 	templates := make([]Template, 0)
 	for _, r := range options.RootPaths {

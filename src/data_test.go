@@ -61,12 +61,8 @@ func TestLoadDataFiles(t *testing.T) {
 	if e = writeTestFile(p[1], goodJson1); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	p = append(p, tdir+"/good1.json")
-	if e = writeTestFile(p[2], goodJson1); e != nil {
-		t.Skip("setup failure:", e)
-	}
 	p = append(p, tdir+"/bad.json")
-	if e = writeTestFile(p[3], badJson); e != nil {
+	if e = writeTestFile(p[2], badJson); e != nil {
 		t.Skip("setup failure:", e)
 	}
 
@@ -89,6 +85,29 @@ func TestLoadDataFiles(t *testing.T) {
 		} else if string(b) == goodJson1 {
 			t.Error("data returned out of order")
 		} else if string(b) != goodJson2 {
+			t.Errorf("incorrect json: %s does not match %s", b, goodJson2)
+		}
+	}
+	
+	d = LoadDataFiles("filename-desc", tdir + "/*")
+	if len(d) == len(p) {
+		t.Error("bad.json passed")
+	} else if len(d) == 0 {
+		t.Error("no data loaded")
+	} else {
+		if b, e = json.Marshal(d[0]); e != nil {
+			t.Error(e)
+		} else if string(b) == goodJson1 {
+			t.Error("data returned out of order")
+		} else if string(b) != goodJson2 {
+			t.Errorf("incorrect json: %s does not match %s", b, goodJson1)
+		}
+		
+		if b, e = json.Marshal(d[1]); e != nil {
+			t.Error(e)
+		} else if string(b) == goodJson2 {
+			t.Error("data returned out of order")
+		} else if string(b) != goodJson1 {
 			t.Errorf("incorrect json: %s does not match %s", b, goodJson2)
 		}
 	}
@@ -116,10 +135,26 @@ func TestLoadDataFiles(t *testing.T) {
 		}
 	}
 	
-	d = LoadDataFiles("", tdir + "/*")
+	d = LoadDataFiles("modified-desc", p...)
 	if len(d) == len(p) {
 		t.Error("bad.json passed")
 	} else if len(d) == 0 {
 		t.Error("no data loaded")
+	} else {
+		if b, e = json.Marshal(d[0]); e != nil {
+			t.Error(e)
+		} else if string(b) == goodJson2 {
+			t.Error("data returned out of order")
+		} else if string(b) != goodJson1 {
+			t.Errorf("incorrect json: %s does not match %s", b, goodJson1)
+		}
+		
+		if b, e = json.Marshal(d[1]); e != nil {
+			t.Error(e)
+		} else if string(b) == goodJson1 {
+			t.Error("data returned out of order")
+		} else if string(b) != goodJson2 {
+			t.Errorf("incorrect json: %s does not match %s", b, goodJson2)
+		}
 	}
 }

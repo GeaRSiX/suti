@@ -99,20 +99,31 @@ func LoadDataFiles(order string, paths ...string) []Data {
 func sortFileData(data map[string]Data, order string) []Data {
 	sorted := make([]Data, 0, len(data))
 	
-	if order == "filename" {
+	if order == "filename-desc" || order == "filename-asc" || order == "filename" {
 		fnames := make([]string, 0, len(data))
 		for fpath, _ := range data {
 			fnames = append(fnames, filepath.Base(fpath))
 		}
 		sort.Strings(fnames)
-		for _, fname := range fnames {
-			 for fpath, d := range data {
-				 if fname == filepath.Base(fpath) {
-					 sorted = append(sorted, d)
+		
+		if order == "filename-desc" {
+			for i := len(fnames)-1; i >= 0; i-- {
+				for fpath, d := range data {
+					if fnames[i] == filepath.Base(fpath) {
+						sorted = append(sorted, d)
+					}
+				}
+			}
+		} else {
+			for _, fname := range fnames {
+				 for fpath, d := range data {
+					 if fname == filepath.Base(fpath) {
+						 sorted = append(sorted, d)
+					 }
 				 }
-			 }
+			}
 		}
-	} else if order == "modified" {
+	} else if order == "modified-desc" || order == "modified-asc" || order == "modified" {
 		stats := make(map[string]os.FileInfo)
 		for fpath, _ := range data {
 			if stat, err := os.Stat(fpath); err != nil {
@@ -126,9 +137,15 @@ func sortFileData(data map[string]Data, order string) []Data {
 		for _, stat := range stats {
 			modtimes = append(modtimes, stat.ModTime())
 		}
-		sort.Slice(modtimes, func(i, j int) bool {
-			return modtimes[i].Before(modtimes[j])
-		})
+		if order == "modified-desc" {
+			sort.Slice(modtimes, func(i, j int) bool {
+				return modtimes[i].After(modtimes[j])
+			})
+		} else {
+			sort.Slice(modtimes, func(i, j int) bool {
+				return modtimes[i].Before(modtimes[j])
+			})
+		}
 		
 		for _, t := range modtimes {
 			for fpath, stat := range stats {
@@ -138,7 +155,6 @@ func sortFileData(data map[string]Data, order string) []Data {
 			}
 		}
 	} else {
-		warn("unrecognised sort option '%s', data will be unsorted", order)
 		for _, d := range data {
 			sorted = append(sorted, d)
 		}
