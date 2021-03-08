@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	hmpl "html/template"
+	"reflect"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,5 +60,27 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 		e = fmt.Errorf("'%s' is not a supported template language", ttype)
 	}
 
+	return
+}
+
+func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
+	if t == nil || d == nil {
+		err = fmt.Errorf("missing parameters")
+		return
+	}
+	
+	tv := reflect.ValueOf(t)
+	tt := reflect.TypeOf(t)
+	if tt.String() == "*template.Template" { // tmpl or hmpl
+		rval := tv.MethodByName("Execute").Call([]reflect.Value{
+			reflect.ValueOf(&result), reflect.ValueOf(&d),
+		})
+		if rval[0].IsNil() == false {
+			err = rval[0].Interface().(error)
+		}
+	} else {
+		err = fmt.Errorf("unable to infer template type '%s'", tt.String())
+	}
+	
 	return
 }
