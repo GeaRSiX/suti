@@ -1,18 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"testing"
+	"strings"
 )
 
-const tmplRootGood = "hello {{ template \"partial\" . }}"
-const tmplPartialGood = "{{ .language }}"
-const tmplRootBad = "hello {{{ template \"partial\" . }}"
-const tmplPartialBad = "{{{ .language }}"
+const tmplRootGood = "{{ .example1 }} {{ template \"tmplPartialGood\" . }}"
+const tmplPartialGood = "{{range .data}} .example2 {{ end }}"
+const tmplRootBad = "{{ example1 }} {{{ template \"partial\" . }}"
+const tmplPartialBad = "{{{ .example }}"
 
-const hmplRootGood = "hello {{ template \"partial\" . }}"
-const hmplPartialGood = "<b>{{ .language }}</b>"
-const hmplRootBad = "hello {{{ template \"partial\" . }}"
-const hmplPartialBad = "<b>{{{ .language }}</b>"
+const hmplRootGood = "<!DOCTYPE html><html>{{ .example1 }} {{ template \"hmplPartialGood\" . }}</html>"
+const hmplPartialGood = "{{range .data}}<b>.example2</b>{{ end }}"
+const hmplRootBad = "{{ example1 }} {{{ template \"partial\" . }}"
+const hmplPartialBad = "<b>{{{ .example2 }}</b>"
 
 func TestLoadTemplateFile(t *testing.T) {
 	var e error
@@ -73,5 +75,35 @@ func TestLoadTemplateFile(t *testing.T) {
 		if _, e := LoadTemplateFile(root, bp...); e == nil {
 			t.Errorf("bad template with bad partials passed\n")
 		}
+	}
+}
+
+func TestExecuteTemplate(t *testing.T) {
+	var e error
+	var sd, gd, d Data
+	var tmpl, hmpl Template
+	var results bytes.Buffer
+	
+	if gd, e = LoadData("json", strings.NewReader(goodJson1)); e != nil {
+		t.Skip("setup failure:", e)
+	}
+	if d, e = LoadData("json", strings.NewReader(goodJson2)); e != nil {
+		t.Skip("setup failure:", e)
+	}
+	data := make([]Data, 1)
+	data = append(data, d)
+	sd = GenerateSuperData("", data, gd)
+	if tmpl, e = LoadTemplateFile(tmplRootGood, tmplPartialGood); e != nil {
+		t.Skip("setup failure:", e)
+	}
+	if hmpl, e = LoadTemplateFile(hmplRootGood, hmplPartialGood); e != nil {
+		t.Skip("setup failure:", e)
+	}
+	
+	if results, e = ExecuteTemplate(tmpl, sd); e != nil {
+		t.Error(e)
+	}
+	if results, e = ExecuteTemplate(hmpl, sd); e != nil {
+		t.Error(e)
 	}
 }
