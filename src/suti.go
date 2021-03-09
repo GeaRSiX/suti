@@ -6,7 +6,7 @@ import (
 )
 
 type Options struct {
-	RootPaths       []string
+	RootPath        string
 	PartialPaths    []string
 	GlobalDataPaths []string
 	DataPaths       []string
@@ -30,19 +30,18 @@ func init() {
 }
 
 func main() {
-
-	_ = LoadDataFiles("", options.GlobalDataPaths...)
-	_ = LoadDataFiles(options.SortData, options.DataPaths...)
-
-	templates := make([]Template, 0)
-	for _, r := range options.RootPaths {
-		if t, e := LoadTemplateFile(r, options.PartialPaths...); e != nil {
-			warn("unable to load templates (%s)", e)
-		} else {
-			templates = append(templates, t)
-		}
+	gd := LoadDataFiles("", options.GlobalDataPaths...)
+	d := LoadDataFiles(options.SortData, options.DataPaths...)
+	sd := GenerateSuperData(options.DataKey, d, gd...)
+	
+	if t, e := LoadTemplateFile(options.RootPath, options.PartialPaths...); e != nil {
+		warn("unable to load templates (%s)", e)
+	} else if out, err := ExecuteTemplate(t, sd); err != nil {
+		warn("failed to execute template '%s' (%s)", options.RootPath, err)
+	} else {
+		fmt.Println(out.String())
 	}
-
+	
 	return
 }
 
@@ -70,8 +69,8 @@ func parseArgs(args []string) (o Options) {
 			}
 
 			// set valid any flags that don't take arguments here
-		} else if flag == "r" || flag == "root" {
-			o.RootPaths = append(o.RootPaths, arg)
+		} else if (flag == "r" || flag == "root") && len(o.RootPath) == 0 {
+			o.RootPath = arg
 		} else if flag == "p" || flag == "partial" {
 			o.PartialPaths = append(o.PartialPaths, arg)
 		} else if flag == "gd" || flag == "globaldata" {

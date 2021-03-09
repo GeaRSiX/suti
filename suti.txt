@@ -23,9 +23,8 @@ DESCRIPTION
   See suti-lib for details.
  
 OPTIONS
-  -r path..., -root path...  
-    path of (multiple) template files to execute against. If a directory is
-    passed then all files within that directory will (recursively) be loaded.
+  -r path, -root path  
+    path of template file to execute against.
 
   -p path..., -partial path...  
     path of (multiple) template files that are called upon by at least one
