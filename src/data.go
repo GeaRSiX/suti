@@ -12,13 +12,14 @@ import (
 	"sort"
 )
 
+// Data is the data type used to represent parsed Data (in any format).
 type Data map[string]interface{}
 
 func getDataType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-// LoadData TODO
+// LoadData reads all data from `in` and loads it in the format set in `lang`.
 func LoadData(lang string, in io.Reader) (d Data, e error) {
 	var fbuf []byte
 	if fbuf, e = ioutil.ReadAll(in); e != nil {
@@ -38,7 +39,8 @@ func LoadData(lang string, in io.Reader) (d Data, e error) {
 	return
 }
 
-// LoadDataFile TODO
+// LoadDataFile loads all the data from the file found at `path` into the the
+// format of that files file extension (e.g. "x.json" will be loaded as a json).
 func LoadDataFile(path string) (Data, error) {
 	if f, e := os.Open(path); e != nil {
 		warn("could not load data file '%s' (%s)", path, e)
@@ -49,7 +51,8 @@ func LoadDataFile(path string) (Data, error) {
 	}
 }
 
-// LoadDataFiles TODO
+// LoadDataFiles loads all files in `paths` recursively and sorted them in
+// `order`.
 func LoadDataFiles(order string, paths ...string) []Data {
 	var err error
 	var stat os.FileInfo
@@ -79,7 +82,7 @@ func LoadDataFiles(order string, paths ...string) []Data {
 							if d, e = LoadDataFile(p); e == nil {
 								loaded[p] = d
 							} else {
-								warn("skipping data file '%s' (%s)", p, e)
+								warn("skipping data file '%s'", p)
 								e = nil
 							}
 						}
@@ -99,60 +102,21 @@ func LoadDataFiles(order string, paths ...string) []Data {
 func sortFileData(data map[string]Data, order string) []Data {
 	sorted := make([]Data, 0, len(data))
 	
-	if order == "filename-desc" || order == "filename-asc" || order == "filename" {
-		fnames := make([]string, 0, len(data))
-		for fpath, _ := range data {
-			fnames = append(fnames, filepath.Base(fpath))
-		}
-		sort.Strings(fnames)
-		
+	if strings.HasPrefix(order, "filename") {
 		if order == "filename-desc" {
-			for i := len(fnames)-1; i >= 0; i-- {
-				for fpath, d := range data {
-					if fnames[i] == filepath.Base(fpath) {
-						sorted = append(sorted, d)
-					}
-				}
-			}
+			sorted = sortFileDataFilename("desc", data)
+		} else if order == "filename-asc" {
+			sorted = sortFileDataFilename("asc", data)
 		} else {
-			for _, fname := range fnames {
-				 for fpath, d := range data {
-					 if fname == filepath.Base(fpath) {
-						 sorted = append(sorted, d)
-					 }
-				 }
-			}
+			sorted = sortFileDataFilename("asc", data)
 		}
-	} else if order == "modified-desc" || order == "modified-asc" || order == "modified" {
-		stats := make(map[string]os.FileInfo)
-		for fpath, _ := range data {
-			if stat, err := os.Stat(fpath); err != nil {
-				warn("failed to stat %s (%s)", fpath, err)
-			} else {
-				stats[fpath] = stat
-			}
-		}
-		
-		modtimes := make([]time.Time, 0, len(data))
-		for _, stat := range stats {
-			modtimes = append(modtimes, stat.ModTime())
-		}
+	} else if strings.HasPrefix(order, "modified") {
 		if order == "modified-desc" {
-			sort.Slice(modtimes, func(i, j int) bool {
-				return modtimes[i].After(modtimes[j])
-			})
+			sorted = sortFileDataModified("desc", data)
+		} else if order == "modified-asc" {
+			sorted = sortFileDataModified("asc", data)
 		} else {
-			sort.Slice(modtimes, func(i, j int) bool {
-				return modtimes[i].Before(modtimes[j])
-			})
-		}
-		
-		for _, t := range modtimes {
-			for fpath, stat := range stats {
-				if t == stat.ModTime() {
-					sorted = append(sorted, data[fpath])
-				}
-			}
+			sorted = sortFileDataModified("asc", data)
 		}
 	} else {
 		for _, d := range data {
@@ -163,7 +127,71 @@ func sortFileData(data map[string]Data, order string) []Data {
 	return sorted
 }
 
-// GenerateSuperData TODO
+func sortFileDataFilename(direction string, data map[string]Data) []Data {
+	sorted := make([]Data, 0, len(data))
+	fnames := make([]string, 0, len(data))
+	for fpath, _ := range data {
+		fnames = append(fnames, filepath.Base(fpath))
+	}
+	sort.Strings(fnames)
+	
+	if direction == "desc" {
+		for i := len(fnames)-1; i >= 0; i-- {
+			for fpath, d := range data {
+				if fnames[i] == filepath.Base(fpath) {
+					sorted = append(sorted, d)
+				}
+			}
+		}
+	} else {
+		for _, fname := range fnames {
+			 for fpath, d := range data {
+				 if fname == filepath.Base(fpath) {
+					 sorted = append(sorted, d)
+				 }
+			 }
+		}
+	}
+	return sorted
+}
+
+func sortFileDataModified(direction string, data map[string]Data) []Data {
+	sorted := make([]Data, 0, len(data))
+	stats := make(map[string]os.FileInfo)
+	for fpath, _ := range data {
+		if stat, err := os.Stat(fpath); err != nil {
+			warn("failed to stat %s (%s)", fpath, err)
+		} else {
+			stats[fpath] = stat
+		}
+	}
+	
+	modtimes := make([]time.Time, 0, len(data))
+	for _, stat := range stats {
+		modtimes = append(modtimes, stat.ModTime())
+	}
+	if direction == "desc" {
+		sort.Slice(modtimes, func(i, j int) bool {
+			return modtimes[i].After(modtimes[j])
+		})
+	} else {
+		sort.Slice(modtimes, func(i, j int) bool {
+			return modtimes[i].Before(modtimes[j])
+		})
+	}
+	
+	for _, t := range modtimes {
+		for fpath, stat := range stats {
+			if t == stat.ModTime() {
+				sorted = append(sorted, data[fpath])
+			}
+		}
+	}
+	return sorted
+}
+
+// GenerateSuperData merges all `global` Data and then adds `d` to the merged
+// structure under the key provided in `datakey`.
 func GenerateSuperData(datakey string, d []Data, global ...Data) (superd Data) {
 	if len(datakey) == 0 {
 		datakey = "data"
@@ -178,7 +206,9 @@ func GenerateSuperData(datakey string, d []Data, global ...Data) (superd Data) {
 	return
 }
  
- // MergeData TODO
+ // MergeData combines all keys in `data` into a single Data object. If there's
+ // a conflict (duplicate key), the first found value is kept and the conflicting
+ // values are ignored.
  func MergeData(data ...Data) Data {
 	 merged := make(Data)
 	 for _, d := range data {
