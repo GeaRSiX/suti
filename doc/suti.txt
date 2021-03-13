@@ -1,5 +1,3 @@
-// FIRST-DRAFT
-
 NAME
   suti - simple unified templating interface
  
