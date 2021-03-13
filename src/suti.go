@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"strings"
 )
 
 type Options struct {
@@ -23,7 +25,29 @@ func init() {
 		os.Exit(0)
 	}
 
-	options = parseArgs(os.Args[1:])
+	options = parseArgs(os.Args[1:], Options{})
+	if len(options.ConfigFile) != 0 {
+		var cfgln string
+		cfgargs := make([]string, 0)
+		if cfgf, err := os.Open(options.ConfigFile); err == nil {
+			defer cfgf.Close()
+			var err error
+			for err != io.EOF {
+				_, err = fmt.Fscanln(cfgf, &cfgln)
+				for i, a := range strings.Split(cfgln, "=") {
+					if i == 0 {
+						a = "-"+a
+					}
+					cfgargs = append(cfgargs, a)
+				}
+			}
+		} else {
+			warn("unable to open config file (%s): %s", options.ConfigFile, err)
+		}
+		if len(cfgargs) > 0 {
+			options = parseArgs(cfgargs, options)
+		}
+	}
 	if len(options.SortData) == 0 {
 		options.SortData = "filename"
 	}
@@ -51,7 +75,8 @@ func warn(msg string, args ...interface{}) {
 }
 
 // custom arg parser because golang.org/pkg/flag doesn't support list args
-func parseArgs(args []string) (o Options) {
+func parseArgs(args []string, existing Options) (o Options) {
+	o = existing
 	var flag string
 	for a := 0; a < len(args); a++ {
 		arg := args[a]
@@ -77,16 +102,16 @@ func parseArgs(args []string) (o Options) {
 			o.GlobalDataPaths = append(o.GlobalDataPaths, arg)
 		} else if flag == "d" || flag == "data" {
 			o.DataPaths = append(o.DataPaths, arg)
-		} else if flag == "dk" || flag == "datakey" {
+		} else if flag == "dk" || flag == "datakey" && len(o.DataKey) == 0 {
 			o.DataKey = arg
-		} else if flag == "sd" || flag == "sortdata" {
+		} else if flag == "sd" || flag == "sortdata" && len(o.SortData) == 0 {
 			o.SortData = arg
-		} else if flag == "cfg" || flag == "config" {
+		} else if flag == "cfg" || flag == "config" && len(o.ConfigFile) == 0 {
 			o.ConfigFile = arg
 		} else if len(flag) == 0 {
 			// skip unknown flag arguments
 		} else {
-			warn("unknown flag: '%s'", flag)
+			warn("ignoring flag: '%s'", flag)
 			flag = ""
 		}
 	}
