@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
-	"time"
 	"path/filepath"
-	"strings"
 	"sort"
+	"strings"
+	"time"
 )
 
 // Data is the data type used to represent parsed Data (in any format).
@@ -23,7 +24,9 @@ func getDataType(path string) string {
 func LoadData(lang string, in io.Reader) (d Data, e error) {
 	var fbuf []byte
 	if fbuf, e = ioutil.ReadAll(in); e != nil {
-		return
+		return make(Data), e
+	} else if len(fbuf) == 0 {
+		return make(Data), nil
 	}
 
 	if lang == "json" {
@@ -32,6 +35,8 @@ func LoadData(lang string, in io.Reader) (d Data, e error) {
 		} else {
 			e = fmt.Errorf("invalid json %s", fbuf)
 		}
+	} else if lang == "yaml" {
+		e = yaml.Unmarshal(fbuf, &d)
 	} else {
 		e = fmt.Errorf("'%s' is not a supported data language", lang)
 	}
@@ -95,13 +100,13 @@ func LoadDataFiles(order string, paths ...string) []Data {
 			}
 		}
 	}
-	
+
 	return sortFileData(loaded, order)
 }
 
 func sortFileData(data map[string]Data, order string) []Data {
 	sorted := make([]Data, 0, len(data))
-	
+
 	if strings.HasPrefix(order, "filename") {
 		if order == "filename-desc" {
 			sorted = sortFileDataFilename("desc", data)
@@ -123,7 +128,7 @@ func sortFileData(data map[string]Data, order string) []Data {
 			sorted = append(sorted, d)
 		}
 	}
-	
+
 	return sorted
 }
 
@@ -134,9 +139,9 @@ func sortFileDataFilename(direction string, data map[string]Data) []Data {
 		fnames = append(fnames, filepath.Base(fpath))
 	}
 	sort.Strings(fnames)
-	
+
 	if direction == "desc" {
-		for i := len(fnames)-1; i >= 0; i-- {
+		for i := len(fnames) - 1; i >= 0; i-- {
 			for fpath, d := range data {
 				if fnames[i] == filepath.Base(fpath) {
 					sorted = append(sorted, d)
@@ -145,11 +150,11 @@ func sortFileDataFilename(direction string, data map[string]Data) []Data {
 		}
 	} else {
 		for _, fname := range fnames {
-			 for fpath, d := range data {
-				 if fname == filepath.Base(fpath) {
-					 sorted = append(sorted, d)
-				 }
-			 }
+			for fpath, d := range data {
+				if fname == filepath.Base(fpath) {
+					sorted = append(sorted, d)
+				}
+			}
 		}
 	}
 	return sorted
@@ -165,7 +170,7 @@ func sortFileDataModified(direction string, data map[string]Data) []Data {
 			stats[fpath] = stat
 		}
 	}
-	
+
 	modtimes := make([]time.Time, 0, len(data))
 	for _, stat := range stats {
 		modtimes = append(modtimes, stat.ModTime())
@@ -179,7 +184,7 @@ func sortFileDataModified(direction string, data map[string]Data) []Data {
 			return modtimes[i].Before(modtimes[j])
 		})
 	}
-	
+
 	for _, t := range modtimes {
 		for fpath, stat := range stats {
 			if t == stat.ModTime() {
@@ -197,28 +202,28 @@ func GenerateSuperData(datakey string, d []Data, global ...Data) (superd Data) {
 		datakey = "data"
 	}
 	superd = MergeData(global...)
-	
+
 	if superd[datakey] != nil {
 		warn("global data has a key matching the datakey ('%s')\n",
-		"this value of this key will be overwritten")
+			"this value of this key will be overwritten")
 	}
 	superd[datakey] = d
 	return
 }
- 
- // MergeData combines all keys in `data` into a single Data object. If there's
- // a conflict (duplicate key), the first found value is kept and the conflicting
- // values are ignored.
- func MergeData(data ...Data) Data {
-	 merged := make(Data)
-	 for _, d := range data {
-		 for k, v := range d {
-			 if merged[k] == nil {
-				 merged[k] = v
-			 } else {
-				 warn("merge conflict for data key '%s'\n", k)
-			 }
-		 }
-	 }
-	 return merged
- }
+
+// MergeData combines all keys in `data` into a single Data object. If there's
+// a conflict (duplicate key), the first found value is kept and the conflicting
+// values are ignored.
+func MergeData(data ...Data) Data {
+	merged := make(Data)
+	for _, d := range data {
+		for k, v := range d {
+			if merged[k] == nil {
+				merged[k] = v
+			} else {
+				warn("merge conflict for data key '%s'\n", k)
+			}
+		}
+	}
+	return merged
+}

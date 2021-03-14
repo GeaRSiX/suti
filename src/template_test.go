@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"testing"
 	"strings"
+	"testing"
 )
 
 const tmplRootGood = "{{ .example1 }} {{ template \"tmplPartialGood\" . }}"
@@ -83,7 +83,7 @@ func TestExecuteTemplate(t *testing.T) {
 	var sd, gd, d Data
 	var tmpl, hmpl Template
 	var results bytes.Buffer
-	
+
 	if gd, e = LoadData("json", strings.NewReader(goodJson1)); e != nil {
 		t.Skip("setup failure:", e)
 	}
@@ -99,11 +99,12 @@ func TestExecuteTemplate(t *testing.T) {
 	if hmpl, e = LoadTemplateFile(hmplRootGood, hmplPartialGood); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	
+
 	if results, e = ExecuteTemplate(tmpl, sd); e != nil {
 		t.Error(e)
 	}
 	if results, e = ExecuteTemplate(hmpl, sd); e != nil {
 		t.Error(e)
 	}
+	t.Log(results)
 }

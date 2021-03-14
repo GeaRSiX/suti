@@ -36,7 +36,7 @@ func init() {
 				_, err = fmt.Fscanln(cfgf, &cfgln)
 				for i, a := range strings.Split(cfgln, "=") {
 					if i == 0 {
-						a = "-"+a
+						a = "-" + a
 					}
 					cfgargs = append(cfgargs, a)
 				}
@@ -57,7 +57,7 @@ func main() {
 	gd := LoadDataFiles("", options.GlobalDataPaths...)
 	d := LoadDataFiles(options.SortData, options.DataPaths...)
 	sd := GenerateSuperData(options.DataKey, d, gd...)
-	
+
 	if t, e := LoadTemplateFile(options.RootPath, options.PartialPaths...); e != nil {
 		warn("unable to load templates (%s)", e)
 	} else if out, err := ExecuteTemplate(t, sd); err != nil {
@@ -65,7 +65,7 @@ func main() {
 	} else {
 		fmt.Println(out.String())
 	}
-	
+
 	return
 }
 

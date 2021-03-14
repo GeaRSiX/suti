@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	hmpl "html/template"
-	"reflect"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	tmpl "text/template"
 )
@@ -68,7 +68,7 @@ func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
 		err = fmt.Errorf("missing parameters")
 		return
 	}
-	
+
 	tv := reflect.ValueOf(t)
 	tt := reflect.TypeOf(t)
 	if tt.String() == "*template.Template" { // tmpl or hmpl
@@ -81,6 +81,6 @@ func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
 	} else {
 		err = fmt.Errorf("unable to infer template type '%s'", tt.String())
 	}
-	
+
 	return
 }
