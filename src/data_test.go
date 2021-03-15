@@ -83,7 +83,7 @@ func TestLoadData(t *testing.T) {
 	if d, e = LoadData("toml", strings.NewReader(badData)); e == nil || len(d) > 0 {
 		t.Error("bad toml passed")
 	}
-	
+
 	// misc
 	if d, e = LoadData("json", strings.NewReader("")); e != nil {
 		t.Errorf("empty file failed for json: %s, %s", d, e)
@@ -97,7 +97,7 @@ func TestLoadData(t *testing.T) {
 	if d, e = LoadData("ebrgji", strings.NewReader(goodJson)); e == nil || len(d) > 0 {
 		t.Errorf("invalid data language passed: %s, %s", d, e)
 	}
-	
+
 	return
 }
 

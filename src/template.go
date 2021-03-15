@@ -21,7 +21,7 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
 		return nil, fmt.Errorf("no root tempslate specified")
 	}
-	
+
 	if stat, err := os.Stat(root); err != nil {
 		return nil, err
 	} else if stat.IsDir() {
@@ -38,6 +38,8 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 					if gotmpl, e = gotmpl.ParseFiles(p); e != nil {
 						warn("failed to parse partial '%s': %s", p, e)
 					}
+				} else {
+					warn("skipping partial '%s': non-matching filetype", p)
 				}
 			}
 			t = gotmpl
@@ -47,10 +49,12 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 		if gohmpl, e = hmpl.ParseFiles(root); e == nil {
 			for _, p := range partials {
 				ptype := getTemplateType(p)
-				if ptype == "tmpl" || ptype == "gotmpl" {
+				if ptype == "hmpl" || ptype == "gohmpl" {
 					if gohmpl, e = gohmpl.ParseFiles(p); e != nil {
 						warn("failed to parse partial '%s': %s", p, e)
 					}
+				} else {
+					warn("skipping partial '%s': non-matching filetype", p)
 				}
 			}
 			t = gohmpl
@@ -64,7 +68,7 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
 	tv := reflect.ValueOf(t)
 	tt := reflect.TypeOf(t)
-	
+
 	if tt.String() == "*template.Template" { // tmpl or hmpl
 		rval := tv.MethodByName("Execute").Call([]reflect.Value{
 			reflect.ValueOf(&result), reflect.ValueOf(&d),
