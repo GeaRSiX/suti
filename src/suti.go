@@ -19,6 +19,11 @@ type Options struct {
 
 var options Options
 
+func warn(msg string, args ...interface{}) {
+	fmt.Println("WARNING", strings.TrimSuffix(fmt.Sprintf(msg, args...), "\n"))
+	return
+}
+
 func init() {
 	if len(os.Args) <= 1 {
 		print("nothing to do")
@@ -66,11 +71,6 @@ func main() {
 		fmt.Println(out.String())
 	}
 
-	return
-}
-
-func warn(msg string, args ...interface{}) {
-	fmt.Println("WARNING", fmt.Sprintf(msg, args...))
 	return
 }
 
