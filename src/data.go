@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pelletier/go-toml"
 	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
@@ -30,13 +31,11 @@ func LoadData(lang string, in io.Reader) (d Data, e error) {
 	}
 
 	if lang == "json" {
-		if json.Valid(fbuf) {
-			e = json.Unmarshal(fbuf, &d)
-		} else {
-			e = fmt.Errorf("invalid json %s", fbuf)
-		}
+		e = json.Unmarshal(fbuf, &d)
 	} else if lang == "yaml" {
 		e = yaml.Unmarshal(fbuf, &d)
+	} else if lang == "toml" {
+		e = toml.Unmarshal(fbuf, &d)
 	} else {
 		e = fmt.Errorf("'%s' is not a supported data language", lang)
 	}
@@ -87,7 +86,7 @@ func LoadDataFiles(order string, paths ...string) []Data {
 							if d, e = LoadDataFile(p); e == nil {
 								loaded[p] = d
 							} else {
-								warn("skipping data file '%s'", p)
+								warn("skipping data file '%s': %s", p, e)
 								e = nil
 							}
 						}
@@ -221,7 +220,7 @@ func MergeData(data ...Data) Data {
 			if merged[k] == nil {
 				merged[k] = v
 			} else {
-				warn("merge conflict for data key '%s'\n", k)
+				warn("merge conflict for data key '%s'", k)
 			}
 		}
 	}
