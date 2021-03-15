@@ -62,18 +62,17 @@ func TestLoadTemplateFile(t *testing.T) {
 	}
 	for _, root := range gr { // good root, bad partials
 		if _, e := LoadTemplateFile(root, bp...); e == nil {
-			t.Errorf("good template with bad partials passed\n")
+			t.Errorf("no error for good template with bad partials\n")
 		}
 	}
 	for _, root := range br { // bad root, good partials
-		if tmp, e := LoadTemplateFile(root, gp...); e == nil {
-			t.Log(tmp)
-			t.Errorf("bad template with good partials passed\n")
+		if _, e := LoadTemplateFile(root, gp...); e == nil {
+			t.Errorf("no error for bad template with good partials\n")
 		}
 	}
 	for _, root := range br { // bad root, bad partials
 		if _, e := LoadTemplateFile(root, bp...); e == nil {
-			t.Errorf("bad template with bad partials passed\n")
+			t.Errorf("no error for bad template with bad partials\n")
 		}
 	}
 }

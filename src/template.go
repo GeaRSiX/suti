@@ -19,58 +19,52 @@ func getTemplateType(path string) string {
 
 func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
-		e = fmt.Errorf("no root template specified")
+		return nil, fmt.Errorf("no root tempslate specified")
 	}
+	
 	if stat, err := os.Stat(root); err != nil {
-		e = err
+		return nil, err
 	} else if stat.IsDir() {
-		e = fmt.Errorf("root path must be a file, not a directory: %s", root)
-	}
-	if e != nil {
-		return
+		return nil, fmt.Errorf("root path must be a file, not a directory: %s", root)
 	}
 
 	ttype := getTemplateType(root)
-
 	if ttype == "tmpl" || ttype == "gotmpl" {
 		var gotmpl *tmpl.Template
-		if gotmpl, e = tmpl.ParseFiles(root); e != nil {
-			return nil, e
-		}
-		for _, p := range partials {
-			ptype := getTemplateType(p)
-			if ptype == "tmpl" || ptype == "gotmpl" {
-				gotmpl, e = gotmpl.ParseFiles(p)
+		if gotmpl, e = tmpl.ParseFiles(root); e == nil {
+			for _, p := range partials {
+				ptype := getTemplateType(p)
+				if ptype == "tmpl" || ptype == "gotmpl" {
+					if gotmpl, e = gotmpl.ParseFiles(p); e != nil {
+						warn("failed to parse partial '%s': %s", p, e)
+					}
+				}
 			}
+			t = gotmpl
 		}
-		t = gotmpl
 	} else if ttype == "hmpl" || ttype == "gohmpl" {
 		var gohmpl *hmpl.Template
-		if gohmpl, e = hmpl.ParseFiles(root); e != nil {
-			return nil, e
-		}
-		for _, p := range partials {
-			ptype := getTemplateType(p)
-			if ptype == "tmpl" || ptype == "gotmpl" {
-				gohmpl, e = gohmpl.ParseFiles(p)
+		if gohmpl, e = hmpl.ParseFiles(root); e == nil {
+			for _, p := range partials {
+				ptype := getTemplateType(p)
+				if ptype == "tmpl" || ptype == "gotmpl" {
+					if gohmpl, e = gohmpl.ParseFiles(p); e != nil {
+						warn("failed to parse partial '%s': %s", p, e)
+					}
+				}
 			}
+			t = gohmpl
 		}
-		t = gohmpl
 	} else {
 		e = fmt.Errorf("'%s' is not a supported template language", ttype)
 	}
-
 	return
 }
 
 func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
-	if t == nil || d == nil {
-		err = fmt.Errorf("missing parameters")
-		return
-	}
-
 	tv := reflect.ValueOf(t)
 	tt := reflect.TypeOf(t)
+	
 	if tt.String() == "*template.Template" { // tmpl or hmpl
 		rval := tv.MethodByName("Execute").Call([]reflect.Value{
 			reflect.ValueOf(&result), reflect.ValueOf(&d),
