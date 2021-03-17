@@ -20,95 +20,63 @@ const hmplResult = "<!DOCTYPE html><html><p>root <b>partial</b></p></html>"
 const hmplRootBad = "{{ example }} {{{ template \"partial\" . }}"
 const hmplPartialBad = "<b>{{{ .example2 }}</b>"
 
+func validateTemplateFile(t *testing.T, template Template, root string, partials ...string) {
+	types := map[string]string{
+		"tmpl":   "*template.Template",
+		"gotmpl": "*template.Template",
+		"hmpl":   "*template.Template",
+		"gohmpl": "*template.Template",
+	}
+	if reflect.TypeOf(template).String() != types[getTemplateType(root)] {
+		t.Error("invalid template loaded")
+	}
+
+	var rv []reflect.Value
+	for _, p := range partials {
+		p = filepath.Base(p)
+		rv := reflect.ValueOf(template).MethodByName("Lookup").Call([]reflect.Value{
+			reflect.ValueOf(p),
+		})
+		if rv[0].IsNil() {
+			t.Errorf("missing defined template '%s'", p)
+			rv = reflect.ValueOf(template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
+			t.Log(rv)
+		}
+	}
+	rv = reflect.ValueOf(template).MethodByName("Name").Call([]reflect.Value{})
+	if rv[0].String() != filepath.Base(root) {
+		t.Errorf("invalid template name: %s does not match %s",
+			rv[0].String(), filepath.Base(root))
+	}
+}
+
 func TestLoadTemplateFile(t *testing.T) {
-	var e error
 	var gr, gp, br, bp []string
 	tdir := t.TempDir()
 
 	gr = append(gr, tdir+"/goodRoot.tmpl")
-	if e = writeTestFile(gr[0], tmplRootGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, gr[0], tmplRootGood)
 	gp = append(gp, tdir+"/goodPartial.gotmpl")
-	if e = writeTestFile(gp[0], tmplPartialGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, gp[0], tmplPartialGood)
 	br = append(br, tdir+"/badRoot.tmpl")
-	if e = writeTestFile(br[0], tmplRootBad); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, br[0], tmplRootBad)
 	bp = append(bp, tdir+"/badPartial.gotmpl")
-	if e = writeTestFile(bp[0], tmplPartialBad); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, bp[0], tmplPartialBad)
 
 	gr = append(gr, tdir+"/goodRoot.hmpl")
-	if e = writeTestFile(gr[1], hmplRootGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, gr[1], hmplRootGood)
 	gp = append(gp, tdir+"/goodPartial.gohmpl")
-	if e = writeTestFile(gp[1], hmplPartialGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, gp[1], hmplPartialGood)
 	br = append(br, tdir+"/badRoot.hmpl")
-	if e = writeTestFile(br[1], hmplRootBad); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, br[1], hmplRootBad)
 	bp = append(bp, tdir+"/badPartial.gohmpl")
-	if e = writeTestFile(bp[1], hmplPartialBad); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, bp[1], hmplPartialBad)
 
-	for _, root := range gr { // good root, good partials
-		if template, e := LoadTemplateFile(root, gp...); e != nil {
+	for g, root := range gr { // good root, good partials
+		if template, e := LoadTemplateFile(root, gp[g]); e != nil {
 			t.Error(e)
 		} else {
-			ttype := getTemplateType(root)
-			if ttype == "tmpl" || ttype == "gotmpl" {
-				ttype = reflect.TypeOf(template).String()
-				if ttype != "*template.Template" {
-					t.Errorf("invalid tempate type parsed: %s should be *template.Template", ttype)
-				}
-				rv := reflect.ValueOf(template).MethodByName("Lookup").Call([]reflect.Value{
-					reflect.ValueOf("goodRoot.tmpl"),
-				})
-				if rv[0].IsNil() {
-					t.Error("missing defined templates")
-				}
-				rv = reflect.ValueOf(template).MethodByName("Lookup").Call([]reflect.Value{
-					reflect.ValueOf("goodPartial.gotmpl"),
-				})
-				if rv[0].IsNil() {
-					t.Error("missing defined templates")
-				}
-				rv = reflect.ValueOf(template).MethodByName("Name").Call([]reflect.Value{})
-				if rv[0].String() != filepath.Base(root) {
-					t.Errorf("invalid template name: %s does not match %s", rv[0].String(), filepath.Base(root))
-				}
-			} else if ttype == "hmpl" || ttype == "gohmpl" {
-				ttype = reflect.TypeOf(template).String()
-				if ttype != "*template.Template" {
-					t.Errorf("invalid tempate type parsed: %s should be *template.Template", ttype)
-				}
-				rv := reflect.ValueOf(template).MethodByName("Lookup").Call([]reflect.Value{
-					reflect.ValueOf("goodRoot.hmpl"),
-				})
-				if rv[0].IsNil() {
-					t.Error("missing defined templates")
-				}
-				rv = reflect.ValueOf(template).MethodByName("Lookup").Call([]reflect.Value{
-					reflect.ValueOf("goodPartial.gohmpl"),
-				})
-				if rv[0].IsNil() {
-					t.Error("missing defined templates")
-				}
-				rv = reflect.ValueOf(template).MethodByName("Name").Call([]reflect.Value{})
-				if rv[0].String() != filepath.Base(root) {
-					t.Errorf("invalid template name: %s does not match %s", rv[0].String(), filepath.Base(root))
-				}
-			} else {
-				t.Errorf("test broken: invalid template type written (%s)", root)
-			}
+			validateTemplateFile(t, template, root, gp[g])
 		}
 	}
 	for _, root := range gr { // good root, bad partials
@@ -128,44 +96,47 @@ func TestLoadTemplateFile(t *testing.T) {
 	}
 }
 
+func validateExecuteTemplate(t *testing.T, results string, expect string, e error) {
+	if e != nil {
+		t.Error(e)
+	}
+	if results != expect {
+		t.Errorf("invalid results: %s should match %s", results, expect)
+	}
+}
+
 func TestExecuteTemplate(t *testing.T) {
 	var e error
-	var sd, gd, d Data
+	var sd, data Data
+	var gd, d []Data
 	var tmplr, tmplp, hmplr, hmplp string
 	var tmpl, hmpl Template
 	var results bytes.Buffer
 	tdir := t.TempDir()
 
 	tmplr = tdir + "/tmplRootGood.gotmpl"
-	if e = writeTestFile(tmplr, tmplRootGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, tmplr, tmplRootGood)
 	tmplp = tdir + "/tmplPartialGood.tmpl"
-	if e = writeTestFile(tmplp, tmplPartialGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, tmplp, tmplPartialGood)
 	hmplr = tdir + "/hmplRootGood.gohmpl"
-	if e = writeTestFile(hmplr, hmplRootGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, hmplr, hmplRootGood)
 	hmplp = tdir + "/hmplPartialGood.hmpl"
-	if e = writeTestFile(hmplp, hmplPartialGood); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, hmplp, hmplPartialGood)
 
-	if gd, e = LoadData("json", strings.NewReader(goodJson)); e != nil {
+	if data, e = LoadData("json", strings.NewReader(good["json"])); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if d, e = LoadData("yaml", strings.NewReader(goodYaml)); e != nil {
+	gd = append(gd, data)
+	if data, e = LoadData("yaml", strings.NewReader(good["yaml"])); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if d, e = LoadData("toml", strings.NewReader(goodToml)); e != nil {
+	d = append(d, data)
+	if data, e = LoadData("toml", strings.NewReader(good["toml"])); e != nil {
 		t.Skip("setup failure:", e)
 	}
+	d = append(d, data)
 
-	data := make([]Data, 1)
-	data = append(data, d)
-	sd = GenerateSuperData("", data, gd)
+	sd = GenerateSuperData("", d, gd...)
 	if tmpl, e = LoadTemplateFile(tmplr, tmplp); e != nil {
 		t.Skip("setup failure:", e)
 	}
@@ -173,14 +144,9 @@ func TestExecuteTemplate(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	if results, e = ExecuteTemplate(tmpl, sd); e != nil {
-		t.Error(e)
-	} else if results.String() != tmplResult {
-		t.Errorf("invalid results: %s should match %s", results.String(), tmplResult)
-	}
-	if results, e = ExecuteTemplate(hmpl, sd); e != nil {
-		t.Error(e)
-	} else if results.String() != hmplResult {
-		t.Errorf("invalid results: %s should match %s", results.String(), hmplResult)
-	}
+	results, e = ExecuteTemplate(tmpl, sd)
+	validateExecuteTemplate(t, results.String(), tmplResult, e)
+
+	results, e = ExecuteTemplate(hmpl, sd)
+	validateExecuteTemplate(t, results.String(), hmplResult, e)
 }

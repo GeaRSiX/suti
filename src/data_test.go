@@ -7,215 +7,126 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
-const goodJson = `{"json":0}`
-const goodJson2 = `{"json":1}`
-const goodYaml = `yaml: 0
-`
-const goodToml = `toml = 0
-`
+var good = map[string]string{
+	"json": `{"json":0}`,
+	"yaml": `yaml: 0
+`,
+	"toml": `toml = 0
+`,
+}
+
 const badData = `{"json"!:2:]}}`
 
-func writeTestFile(path string, Data string) (e error) {
-	var f *os.File
-
-	if f, e = os.Create(path); e != nil {
-		return
+func writeTestFile(t *testing.T, path string, Data string) {
+	f, e := os.Create(path)
+	defer f.Close()
+	if e != nil {
+		t.Skipf("setup failure: %s", e)
 	}
-	if _, e = f.WriteString(Data); e != nil {
-		return
+	_, e = f.WriteString(Data)
+	if e != nil {
+		t.Skipf("setup failure: %s", e)
 	}
-	f.Close()
 
 	return
+}
+
+func validateData(t *testing.T, d Data, e error, lang string) {
+	var b []byte
+
+	if e != nil {
+		t.Error(e)
+	}
+	if len(d) == 0 {
+		t.Error("no data loaded")
+	}
+
+	switch lang {
+	case "json":
+		b, e = json.Marshal(d)
+	case "yaml":
+		b, e = yaml.Marshal(d)
+	case "toml":
+		b, e = toml.Marshal(d)
+	}
+
+	if e != nil {
+		t.Error(e)
+	}
+	if string(b) != good[lang] {
+		t.Errorf("incorrect %s: %s does not match %s", lang, b, good[lang])
+	}
 }
 
 func TestLoadData(t *testing.T) {
 	var d Data
 	var e error
-	var b []byte
 
-	// json
-	if d, e = LoadData("json", strings.NewReader(goodJson)); e != nil {
-		t.Error(e)
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = json.Marshal(d); e != nil {
-			t.Error(e)
-		} else if string(b) != goodJson {
-			t.Errorf("incorrect json: %s does not match %s", b, goodJson)
+	for lang, data := range good {
+		d, e = LoadData(lang, strings.NewReader(data))
+		validateData(t, d, e, lang)
+
+		if d, e = LoadData(lang, strings.NewReader(badData)); e == nil || len(d) > 0 {
+			t.Errorf("bad %s passed", lang)
+		}
+
+		if d, e = LoadData(lang, strings.NewReader("")); e != nil {
+			t.Errorf("empty file failed for json: %s, %s", d, e)
 		}
 	}
-	if d, e = LoadData("json", strings.NewReader(badData)); e == nil || len(d) > 0 {
-		t.Error("bad json passed")
-	}
 
-	// yaml
-	if d, e = LoadData("yaml", strings.NewReader(goodYaml)); e != nil {
-		t.Error(e)
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = yaml.Marshal(d); e != nil {
-			t.Error(e)
-		} else if string(b) != goodYaml {
-			t.Errorf("incorrect yaml: %s does not match %s", b, goodYaml)
-		}
-	}
-	if d, e = LoadData("yaml", strings.NewReader(badData)); e == nil || len(d) > 0 {
-		t.Error("bad yaml passed")
-	}
-
-	// toml
-	if d, e = LoadData("toml", strings.NewReader(goodToml)); e != nil {
-		t.Error(e)
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = toml.Marshal(d); e != nil {
-			t.Error(e)
-		} else if string(b) != goodToml {
-			t.Errorf("incorrect toml: %s does not match %s", b, goodToml)
-		}
-	}
-	if d, e = LoadData("toml", strings.NewReader(badData)); e == nil || len(d) > 0 {
-		t.Error("bad toml passed")
-	}
-
-	// misc
-	if d, e = LoadData("json", strings.NewReader("")); e != nil {
-		t.Errorf("empty file failed for json: %s, %s", d, e)
-	}
-	if d, e = LoadData("yaml", strings.NewReader("")); e != nil {
-		t.Errorf("empty file failed for yaml: %s, %s", d, e)
-	}
-	if d, e = LoadData("toml", strings.NewReader("")); e != nil {
-		t.Errorf("empty file failed toml: %s, %s", d, e)
-	}
-	if d, e = LoadData("ebrgji", strings.NewReader(goodJson)); e == nil || len(d) > 0 {
+	if d, e = LoadData("invalid", strings.NewReader("shouldn't pass")); e == nil || len(d) > 0 {
 		t.Errorf("invalid data language passed: %s, %s", d, e)
 	}
 
 	return
 }
 
+func validateFileData(t *testing.T, d []Data, dlen int, orderedLangs ...string) {
+	if dlen != len(orderedLangs) {
+		t.Errorf("invalid orderedLangs length (%d should be %d)", len(orderedLangs), dlen)
+	}
+
+	if len(d) != dlen {
+		t.Errorf("invalid data length (%d should be %d)", len(d), dlen)
+	}
+
+	for i, lang := range orderedLangs {
+		validateData(t, d[i], nil, lang)
+	}
+}
+
 func TestLoadDataFiles(t *testing.T) {
-	var e error
 	var p []string
-	var b []byte
 	var d []Data
 	tdir := t.TempDir()
 
-	p = append(p, tdir+"/good.json")
-	if e = writeTestFile(p[len(p)-1], goodJson); e != nil {
-		t.Skip("setup failure:", e)
-	}
 	p = append(p, tdir+"/1.yaml")
-	if e = writeTestFile(p[len(p)-1], goodYaml); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, p[len(p)-1], good["yaml"])
+	time.Sleep(100 * time.Millisecond)
+	p = append(p, tdir+"/good.json")
+	writeTestFile(t, p[len(p)-1], good["json"])
+	time.Sleep(100 * time.Millisecond)
 	p = append(p, tdir+"/good.toml")
-	if e = writeTestFile(p[len(p)-1], goodToml); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, p[len(p)-1], good["toml"])
+	time.Sleep(100 * time.Millisecond)
 	p = append(p, tdir+"/bad.json")
-	if e = writeTestFile(p[len(p)-1], badData); e != nil {
-		t.Skip("setup failure:", e)
-	}
+	writeTestFile(t, p[len(p)-1], badData)
 
 	d = LoadDataFiles("filename", tdir)
-	if len(d) == len(p) {
-		t.Error("bad.json passed")
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = yaml.Marshal(d[0]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodYaml {
-			t.Error("data returned out of order")
-		}
-		if b, e = json.Marshal(d[1]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodJson {
-			t.Error("data returned out of order")
-		}
-		if b, e = toml.Marshal(d[2]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodToml {
-			t.Error("data returned out of order")
-		}
-	}
+	validateFileData(t, d, len(p)-1, "yaml", "json", "toml")
 
 	d = LoadDataFiles("filename-desc", tdir+"/*")
-	if len(d) == len(p) {
-		t.Error("bad.json passed")
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = toml.Marshal(d[0]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodToml {
-			t.Error("data returned out of order")
-		}
-		if b, e = json.Marshal(d[1]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodJson {
-			t.Error("data returned out of order")
-		}
-		if b, e = yaml.Marshal(d[2]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodYaml {
-			t.Error("data returned out of order")
-		}
-	}
+	validateFileData(t, d, len(p)-1, "toml", "json", "yaml")
 
 	d = LoadDataFiles("modified", p...)
-	if len(d) == len(p) {
-		t.Error("bad.json passed")
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = json.Marshal(d[0]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodJson {
-			t.Error("data returned out of order")
-		}
-		if b, e = yaml.Marshal(d[1]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodYaml {
-			t.Error("data returned out of order")
-		}
-		if b, e = toml.Marshal(d[2]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodToml {
-			t.Error("data returned out of order")
-		}
-	}
+	validateFileData(t, d, len(p)-1, "yaml", "json", "toml")
 
 	d = LoadDataFiles("modified-desc", p...)
-	if len(d) == len(p) {
-		t.Error("bad.json passed")
-	} else if len(d) == 0 {
-		t.Error("no data loaded")
-	} else {
-		if b, e = toml.Marshal(d[0]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodToml {
-			t.Error("data returned out of order")
-		}
-		if b, e = yaml.Marshal(d[1]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodYaml {
-			t.Error("data returned out of order")
-		}
-		if b, e = json.Marshal(d[2]); e != nil {
-			t.Error(e)
-		} else if string(b) != goodJson {
-			t.Error("data returned out of order")
-		}
-	}
+	validateFileData(t, d, len(p)-1, "toml", "json", "yaml")
 }
 
 func TestGenerateSuperData(t *testing.T) {
@@ -225,17 +136,17 @@ func TestGenerateSuperData(t *testing.T) {
 	var d []Data
 	var sd Data
 
-	if data, e = LoadData("json", strings.NewReader(goodJson)); e == nil {
+	if data, e = LoadData("json", strings.NewReader(good["json"])); e == nil {
 		gd = append(gd, data)
 	} else {
 		t.Skip("setup failure:", e)
 	}
-	if data, e = LoadData("json", strings.NewReader(goodJson)); e == nil {
+	if data, e = LoadData("json", strings.NewReader(good["json"])); e == nil { // test duplicate
 		gd = append(gd, data)
 	} else {
 		t.Skip("setup failure:", e)
 	}
-	if data, e = LoadData("yaml", strings.NewReader(goodYaml)); e == nil {
+	if data, e = LoadData("yaml", strings.NewReader(good["yaml"])); e == nil {
 		d = append(d, data)
 	} else {
 		t.Skip("setup failure:", e)
@@ -260,23 +171,22 @@ func TestMergeData(t *testing.T) {
 	var d []Data
 	var m Data
 
-	if m, e = LoadData("json", strings.NewReader(goodJson)); e == nil {
+	if m, e = LoadData("json", strings.NewReader(good["json"])); e == nil {
 		d = append(d, m)
 	} else {
 		t.Skip("setup failure:", e)
 	}
-	if m, e = LoadData("json", strings.NewReader(goodJson2)); e == nil {
+	if m, e = LoadData("json", strings.NewReader(good["json"])); e == nil {
 		d = append(d, m)
 	} else {
 		t.Skip("setup failure:", e)
 	}
-	if m, e = LoadData("yaml", strings.NewReader(goodYaml)); e == nil {
+	if m, e = LoadData("yaml", strings.NewReader(good["yaml"])); e == nil {
 		d = append(d, m)
 	} else {
 		t.Skip("setup failure:", e)
 	}
 
-	m = nil
 	m = MergeData(d...)
 	if m["json"] == nil || m["yaml"] == nil {
 		t.Error("missing global keys")

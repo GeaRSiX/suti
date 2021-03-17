@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// Options provides all the different variables that need to be set by the
+// user calling suti.
 type Options struct {
 	RootPath        string
 	PartialPaths    []string
@@ -21,7 +23,6 @@ var options Options
 
 func warn(msg string, args ...interface{}) {
 	fmt.Println("WARNING", strings.TrimSuffix(fmt.Sprintf(msg, args...), "\n"))
-	return
 }
 
 func init() {

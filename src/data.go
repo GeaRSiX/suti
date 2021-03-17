@@ -21,6 +21,20 @@ func getDataType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
+func loadGlobPaths(paths ...string) []string {
+	for p, path := range paths {
+		if strings.Contains(path, "*") {
+			if glob, e := filepath.Glob(path); e == nil {
+				paths = append(paths, glob...)
+				paths = append(paths[:p], paths[p+1:]...)
+			} else {
+				warn("error parsing glob '%s': %s", path, e)
+			}
+		}
+	}
+	return paths
+}
+
 // LoadData reads all data from `in` and loads it in the format set in `lang`.
 func LoadData(lang string, in io.Reader) (d Data, e error) {
 	var fbuf []byte
@@ -45,14 +59,15 @@ func LoadData(lang string, in io.Reader) (d Data, e error) {
 
 // LoadDataFile loads all the data from the file found at `path` into the the
 // format of that files file extension (e.g. "x.json" will be loaded as a json).
-func LoadDataFile(path string) (Data, error) {
-	if f, e := os.Open(path); e != nil {
+func LoadDataFile(path string) (d Data, e error) {
+	var f *os.File
+	if f, e = os.Open(path); e != nil {
 		warn("could not load data file '%s' (%s)", path, e)
-		return nil, e
 	} else {
 		defer f.Close()
-		return LoadData(getDataType(path), f)
+		d, e = LoadData(getDataType(path), f)
 	}
+	return
 }
 
 // LoadDataFiles loads all files in `paths` recursively and sorted them in
@@ -64,19 +79,9 @@ func LoadDataFiles(order string, paths ...string) []Data {
 
 	loaded := make(map[string]Data)
 
-	for p, path := range paths {
-		if strings.Contains(path, "*") {
-			if glob, e := filepath.Glob(path); e == nil {
-				paths = append(paths, glob...)
-				paths = append(paths[:p], paths[p+1:]...)
-			} else {
-				warn("error parsing glob '%s': %s", path, err)
-			}
-		}
-	}
+	paths = loadGlobPaths(paths...)
 
 	for _, path := range paths {
-		err = nil
 		stat, err = os.Stat(path)
 		if err == nil {
 			if stat.IsDir() {
@@ -86,12 +91,15 @@ func LoadDataFiles(order string, paths ...string) []Data {
 							if d, e = LoadDataFile(p); e == nil {
 								loaded[p] = d
 							} else {
-								warn("skipping data file '%s': %s", p, e)
+								warn("skipping data file '%s' (%s)", p, e)
 								e = nil
 							}
 						}
 						return e
 					})
+				if err != nil {
+					warn("error loading files in %s (%s)", path, err)
+				}
 			} else if d, err = LoadDataFile(path); err == nil {
 				loaded[path] = d
 			} else {
@@ -134,7 +142,7 @@ func sortFileData(data map[string]Data, order string) []Data {
 func sortFileDataFilename(direction string, data map[string]Data) []Data {
 	sorted := make([]Data, 0, len(data))
 	fnames := make([]string, 0, len(data))
-	for fpath, _ := range data {
+	for fpath := range data {
 		fnames = append(fnames, filepath.Base(fpath))
 	}
 	sort.Strings(fnames)
@@ -162,7 +170,7 @@ func sortFileDataFilename(direction string, data map[string]Data) []Data {
 func sortFileDataModified(direction string, data map[string]Data) []Data {
 	sorted := make([]Data, 0, len(data))
 	stats := make(map[string]os.FileInfo)
-	for fpath, _ := range data {
+	for fpath := range data {
 		if stat, err := os.Stat(fpath); err != nil {
 			warn("failed to stat %s (%s)", fpath, err)
 		} else {
@@ -186,11 +194,14 @@ func sortFileDataModified(direction string, data map[string]Data) []Data {
 
 	for _, t := range modtimes {
 		for fpath, stat := range stats {
-			if t == stat.ModTime() {
+			if stat.ModTime() == t {
 				sorted = append(sorted, data[fpath])
+				delete(stats, fpath)
+				break
 			}
 		}
 	}
+
 	return sorted
 }
 
