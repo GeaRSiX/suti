@@ -43,11 +43,11 @@ OPTIONS
 
   -sd attribute, -sort-data attribute  
     The file attribute to order data files by. If no value is provided, the data
-	will be provided in the order it's loaded.
+    will be provided in the order it's loaded.
     Accepted values: "filename", "modified".
     A suffix can be appended to each value to set the sort order: "-asc" (for
     ascending), "-desc" (for descending). If not specified, this defaults to
-	"-asc".
+    "-asc".
   -cfg file, -config file  
     A data file to provide default values for the above options (see CONFIG).
 
@@ -64,7 +64,7 @@ CONFIG
 	partial="~/templates/blog/"
 	gd="./blog.json"
 	data="./posts/"
-        dk="posts"
+	dk="posts"
 
 DATA
   suti generates a single super-structure of all the data files passed to it.
@@ -116,10 +116,12 @@ LIBRARIES
   it all together - so thanks to the authors. Also here for reference.
 
   - The Go standard library is used for parsing JSON, .tmpl/.gotmpl, .hmpl/.gohmpl
-  // ...
+  - github.com/pelletier/go-toml
+  - gopkg.in/yaml.v3
+  - github.com/cbroglie/mustache
 
 SEE ALSO
-  suti-lib(1)
+  libsuti(3)
 
 AUTHORS
   - gearsix <gearsix@tuta.io>

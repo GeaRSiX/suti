@@ -1,5 +1,23 @@
 package main
 
+/*
+	Copyright (C) 2021 gearsix <gearsix@tuta.io>
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+
 import (
 	"encoding/json"
 	"github.com/pelletier/go-toml"
@@ -11,10 +29,10 @@ import (
 )
 
 var good = map[string]string{
-	"json": `{"json":0}`,
-	"yaml": `yaml: 0
+	"json": `{"eg":0}`,
+	"yaml": `eg: 0
 `,
-	"toml": `toml = 0
+	"toml": `eg = 0
 `,
 }
 
@@ -188,7 +206,7 @@ func TestMergeData(t *testing.T) {
 	}
 
 	m = MergeData(d...)
-	if m["json"] == nil || m["yaml"] == nil {
+	if m["eg"] == nil {
 		t.Error("missing global keys")
 	}
 }
