@@ -1,0 +1,8 @@
+Stardate = 1533.6
+Starship = "U.S.S. Enterprise (NCC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's Log, star date 1533.6. Now manoeuvring to come alongside cargo vessel Antares. Its Captain and First officer are beaming over to us with an unusual passenger.",
+	"Captain's Log, star date 1533.7. We have taken aboard an unusual passenger for transport to Colony Alpha Five. Charles Evans, the sole survivor of a transport crash fourteen years ago. The child, alone from age three, has not only survived, but has grown to intelligent, healthy adolescence. ",
+	"Captain's Log, star date 1535.8. UESPA headquarters notified of the mysterious loss of science probe vessel Antares."
+]

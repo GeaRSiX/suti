@@ -1,0 +1,11 @@
+Stardate = 1513.1
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's log, Stardate 1513.1. Our position, orbiting planet M-113. On board the Enterprise, Mister Spock temporarily in command. On the planet the ruins of an ancient and long-dead civilisation. Ship's surgeon McCoy and myself are now beaming down to the planet's surface. Our mission, routine medical examination of archaeologist Robert Crater and his wife Nancy. Routine but for the fact that Nancy Crater is that one woman in Doctor McCoy's past.",
+	"Captain's log, additional entry. Since our mission was routine, we had beamed down to the planet without suspicion. We were unaware each member of the landing party was seeing a different woman, a different Nancy Crater.",
+	"Captain's log, Stardate 1513.4. In orbit around planet M-113. One crewman, member of the landing party, dead by violence. Cause unknown, but we are certain the cause of death was not poison.",
+	"Captain's log, Stardate 1513.8. I am now certain that the violent death of my crewmen was caused by some strange life-form.",
+	"Captain's log, additional. Armed and able-bodied crewmen are not attacked and slaughtered this easily. Apparently, the killer can immobilize them as it approaches perhaps with some hypnotic or paralysing power. The answer lies with Professor Crater.",
+	"Captain's log, continuing. The Enterprise has been invaded by a creature capable of assuming any form, and with the capacity to paralyse and draw the life from any one of us."
+]

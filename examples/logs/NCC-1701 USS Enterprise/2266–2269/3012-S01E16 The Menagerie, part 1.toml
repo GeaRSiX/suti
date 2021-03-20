@@ -1,0 +1,9 @@
+Stardate = 3012.4
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Log = [
+	"Captain's log, stardate 3012.4. Despite our best efforts to disengage computers, the Enterprise is still locked on a heading for the mysterious planet Talos Four. Meanwhile, as required by Starfleet.",
+	"General Orders, a preliminary hearing on Lieutenant Commander Spock is being convened. And in all the years of my service, this is the most painful moment I've ever faced.",
+	"Captain's log, stardate 3012.6. General Court-Martial convened. Mister Spock has again waived counsel and has entered a plea of guilty.",
+	"Captain's log supplemental. Mister Spock, on trial for mutiny, has forced the court to accept unusual evidence. On our monitor screen, the voyage of Captain Pike and the Enterprise to the one forbidden world in all the galaxy."
+]

@@ -1,0 +1,7 @@
+Stardate = 3134.0
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's log, supplemental entry. Two drops of cordrazine can save a man's life. A hundred times that amount has just accidentally been pumped into Doctor McCoy's body. In a strange, wild frenzy, he has fled the ship's Bridge. All connecting decks have been placed on alert. We have no way of knowing if the madness is permanent or temporary, or in what direction it will drive McCoy.",
+	"Captain's log, no stardate. For us, time does not exist. McCoy, back somewhere in the past, has effected a change in the course of time. All Earth history has been changed. There is no starship Enterprise. We have only one chance. We have asked the Guardian to show us Earth's history again. Spock and I will go back into time ourselves and attempt to set right what ever it was that McCoy changed."
+]

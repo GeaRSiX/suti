@@ -1,0 +1,9 @@
+Stardate = 2124.5
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Ship's log Stardate 2124.5. First Officer Spock reporting for Captain James Kirk. We are orbiting the lone unrecorded planet in the star desert. For four hours, we have made every possible instrument sweep, but Captain Kirk and Helmsman Sulu remain unaccounted for. I have placed the ship on red alert.",
+	"Captain's Log Stardate 2125.7. Science Officer Spock reporting for Captain Kirk. We have completed fourteenth orbit of this planet without establishing contact with our missing officers or the parties sent to find them. Subspace communications remain blocked. However, by diverting impulse power to our sensors, we have made them operable, and we have detected one small area on the surface which seems relatively stable.",
+	"Captain's Log, stardate 2126.1. Delayed report. The whole bridge crew are the unwilling guests of the creature who calls himself Trelane. We are weaponless, powerless, and our only hope of escape with the Enterprise lies in playing his games. I've decided to make my move with the field of honour game, and everything depends on my one chance with the ancient duelling pistol.",
+	"Captain's Log, Stardate 2126.3. First Officer Spock reporting. Still no word from Captain Kirk on the surface below us. Waiting time is almost up. I will soon be forced to attempt departure as per instructions."
+]

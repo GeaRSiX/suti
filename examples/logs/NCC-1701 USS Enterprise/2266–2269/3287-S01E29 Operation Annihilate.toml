@@ -1,0 +1,8 @@
+Stardate = 3287.2
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's log stardate 3287.2. The mass insanity we have tracked across this section of the galaxy seems to have already touched Deneva. That planet, colonised over a century ago, is one of the most beautiful in the galaxy.",
+	"Captain's log supplemental. Whatever the creatures are, they have apparently taken over all the inhabitants of Deneva. Meanwhile, ship's surgeon Doctor McCoy is examining a strange puncture wound left by one of the creatures on Mister Spock's back.",
+	"Captain's log, stardate 3289.8. I am faced with the most difficult decision of my life. Unless we find a way to destroy the creatures without killing their human hosts, my command responsibilities will force me to kill over a million people."
+]

@@ -1,0 +1,10 @@
+Stardate = 2947.3
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's Log, Stardate 2947.3. We have been through a severe ion storm. One crewman is dead. Ship's damage is considerable. I have ordered a non-scheduled layover on Starbase Eleven for repairs. A full report of damages was made to the commanding officer of Starbase Eleven, Commodore Stone.",
+	"Captain's Log, Stardate 2948.5. Starship Enterprise remains in orbit around Starbase Eleven. Full repairs in progress. I've been ordered to stand by on Starbase Eleven until the inquiry into the death of Lieutenant Commander Finney can be conducted. I'm confident of the outcome.",
+	"Captain's Log, Stardate 2948.9. The officers who will comprise my court-martial board are proceeding to Starbase Eleven. Meanwhile, repairs on the Enterprise are almost complete.",
+	"Captain's Log, Stardate 2949.9. The evidence presented by the visual playback to my general court-martial was damning. I suspect even my attorney has begun to doubt me.",
+	"Captain's Log, Stardate 2950.1. After due consideration, the general court-martial has reconvened on board the Enterprise.",
+]

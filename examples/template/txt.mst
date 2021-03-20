@@ -1,0 +1,13 @@
+{{{Title}}}
+{{{Description}}}
+{{{Author}}}
+
+{{#logfiles}}
+---
+Stardate: {{{Stardate}}}
+Starship: {{{Starship}}}
+Captain: {{{Captain}}}
+{{#Logs}}
+  - {{{.}}}
+{{/Logs}}
+{{/logfiles}}

@@ -1,0 +1,11 @@
+{
+	"Stardate": 3192.1,
+	"Starship": "U.S.S. Enterprise (NC-1701)",
+	"Captain": "James T. Kirk",
+	"Logs": [
+		"Captain's log, stardate 3192.1. The Enterprise is en route to star cluster NGC 321. Objective, to open diplomatic relations with the civilisations known to be there. We have sent a message to Eminiar Seven, principal planet of the star cluster, informing them of our friendly intentions. We are awaiting an answer.",
+		"Captain's log, stardate 3192.5. Now in standard orbit around planet Eminiar Seven. My orders are clear. We must establish diplomatic relations at all cost. Preparing to beam down to planet surface.",
+		"Captain's log, delayed. The Enterprise, in orbit about Eminiar Seven, has been declared a casualty of an incredible war fought by computers. I and my landing party, though apparently not included as casualties aboard the Enterprise, are confined on the planet's surface, awaiting what?",
+		"Ship's log, stardate 3193.0. Chief Engineer Scott recording. The Captain and First Officer are overdue and missing on the surface of Eminiar Seven. I have taken standard precautionary measures while we continue our attempts to locate them."
+	]
+}

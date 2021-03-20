@@ -1,0 +1,7 @@
+Stardate = 3012.4
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Personal log, stardate 3013.1. I find it hard to believe the events of the past twenty four hours or the plea of Mister Spock standing general court-martial.",
+	"Personal log, stardate 3013.2. Reconvening court-martial of Mister Spock and the strangest trial evidence ever heard aboard a starship. From the mysterious planet now only one hour ahead of us, the story of Captain Pike's imprisonment there."
+]

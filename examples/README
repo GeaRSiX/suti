@@ -1,0 +1,11 @@
+I collected all the log transcripts from Star Trek TOS :)
+
+To run this example you'll need to explicity set the root template to use (see
+templates/ files). The root templates produce their different file formats
+denoted by the filename (e.g. html.tmpl produces a html file).
+
+An example of how you can run one of these examples:
+
+	suti -cfg suti.cfg -r templates/html.tmpl > out.html
+
+Then open out.html to see the results.

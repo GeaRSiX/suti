@@ -1,0 +1,10 @@
+Stardate = 2817.6
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's log, star date 2817.6. Starship Enterprise diverted from scheduled course. Purpose, to confirm discover by Doctor Thomas Leighton of an extraordinary new synthetic food which would totally end the threat of famine on Cygnia Minor, a nearby Earth colony.",
+	"Captain's log, stardate 2818.9. There are many questions in my mind, too many, perhaps, about the actor Karidian and his daughter. For personal reasons, I'm almost afraid to learn the answers.",
+	"Captain's log, stardate 2819.1. Ship's officer Riley's condition worsening. Doctor McCoy making lab analysis to determine cause and antidote. Entire crew deeply concerned.",
+	"Medical log. Lieutenant Riley's sufficiently recovered to be discharged, but the Captain's ordered him restricted to Sickbay to prevent contact with the passenger who calls himself Karidian and who's suspected of being Kodos the Executioner and of murdering the Lieutenant's family.",
+	"Captain's log, stardate 2819.8. Suspect under surveillance. Strategic areas under double guard. Performance of the Karidian Players taking place as scheduled."
+]

@@ -1,0 +1,10 @@
+Stardate = 1672.1
+Starship = "U.S.S. Enterprise (NC-1701)"
+Captain = "James T. Kirk"
+Logs = [
+	"Captain's Log, stardate 1672.1. Specimen-gathering mission on planet Alpha 177. Unknown to any of us during this time, a duplicate of me, some strange alter ego, had been created by the transporter malfunction.",
+	"Captain's Log, stardate 1672.9. On the planet's surface, temperatures are beginning to drop, our landing party there in growing jeopardy. Due to the malfunction of the ship's transporter, an unexplained duplicate of myself definitely exists.",
+	"Captain's Log, stardate 1673.1. Something has happened to me. Somehow, in being duplicated, I have lost my strength of will. Decisions are becoming more and more difficult.",
+	"Captain's Log, stardate 1673.5. Transporter still inoperable. My negative self is under restraint in Sickbay. My own indecisiveness growing. My force of will steadily weakening. On the planet, condition critical. Surface temperature is seventy five degrees below zero, still dropping.",
+	"Captain's Log, stardate 1673.1. Entry made by Second Officer Spock. Captain Kirk retains command of this vessel, but his force of will rapidly fading. Condition of landing party critical. Transporter unit still under repair."
+]
