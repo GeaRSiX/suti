@@ -18,15 +18,15 @@ package main
 */
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"path/filepath"
 	"os"
 	"strings"
 )
 
-// Options provides all the different variables that need to be set by the
-// user calling suti.
-type Options struct {
+type options struct {
 	RootPath        string
 	PartialPaths    []string
 	GlobalDataPaths []string
@@ -36,10 +36,21 @@ type Options struct {
 	ConfigFile      string
 }
 
-var options Options
+var opts options
+var cwd string
 
 func warn(msg string, args ...interface{}) {
 	fmt.Println("WARNING", strings.TrimSuffix(fmt.Sprintf(msg, args...), "\n"))
+}
+
+func basedir(path string) string {
+	var err error
+	if !filepath.IsAbs(path) {
+		if path, err = filepath.Rel(cwd, path); err != nil {
+			warn("failed to parse path '%s': %s", path, err)
+		}
+	}
+	return path
 }
 
 func init() {
@@ -48,43 +59,24 @@ func init() {
 		os.Exit(0)
 	}
 
-	options = parseArgs(os.Args[1:], Options{})
-	if len(options.ConfigFile) != 0 {
-		var cfgln string
-		cfgargs := make([]string, 0)
-		if cfgf, err := os.Open(options.ConfigFile); err == nil {
-			defer cfgf.Close()
-			var err error
-			for err != io.EOF {
-				_, err = fmt.Fscanln(cfgf, &cfgln)
-				for i, a := range strings.Split(cfgln, "=") {
-					if i == 0 {
-						a = "-" + a
-					}
-					cfgargs = append(cfgargs, a)
-				}
-			}
-		} else {
-			warn("unable to open config file (%s): %s", options.ConfigFile, err)
-		}
-		if len(cfgargs) > 0 {
-			options = parseArgs(cfgargs, options)
-		}
+	cwd = "."
+	opts = parseArgs(os.Args[1:], options{})
+	if len(opts.ConfigFile) != 0 {
+		cwd = filepath.Dir(opts.ConfigFile)
+		opts = parseConfig(opts.ConfigFile, opts)
 	}
-	if len(options.SortData) == 0 {
-		options.SortData = "filename"
-	}
+	opts = setDefaultOptions(opts)
 }
 
 func main() {
-	gd := LoadDataFiles("", options.GlobalDataPaths...)
-	d := LoadDataFiles(options.SortData, options.DataPaths...)
-	sd := GenerateSuperData(options.DataKey, d, gd...)
+	gd := LoadDataFiles("", opts.GlobalDataPaths...)
+	d := LoadDataFiles(opts.SortData, opts.DataPaths...)
+	sd := GenerateSuperData(opts.DataKey, d, gd...)
 
-	if t, e := LoadTemplateFile(options.RootPath, options.PartialPaths...); e != nil {
+	if t, e := LoadTemplateFile(opts.RootPath, opts.PartialPaths...); e != nil {
 		warn("unable to load templates (%s)", e)
 	} else if out, err := ExecuteTemplate(t, sd); err != nil {
-		warn("failed to execute template '%s' (%s)", options.RootPath, err)
+		warn("failed to execute template '%s' (%s)", opts.RootPath, err)
 	} else {
 		fmt.Println(out.String())
 	}
@@ -93,7 +85,7 @@ func main() {
 }
 
 // custom arg parser because golang.org/pkg/flag doesn't support list args
-func parseArgs(args []string, existing Options) (o Options) {
+func parseArgs(args []string, existing options) (o options) {
 	o = existing
 	var flag string
 	for a := 0; a < len(args); a++ {
@@ -113,11 +105,11 @@ func parseArgs(args []string, existing Options) (o Options) {
 
 			// set valid any flags that don't take arguments here
 		} else if (flag == "r" || flag == "root") && len(o.RootPath) == 0 {
-			o.RootPath = arg
+			o.RootPath = basedir(arg)
 		} else if flag == "p" || flag == "partial" {
-			o.PartialPaths = append(o.PartialPaths, arg)
+			o.PartialPaths = append(o.PartialPaths, basedir(arg))
 		} else if flag == "gd" || flag == "globaldata" {
-			o.GlobalDataPaths = append(o.GlobalDataPaths, arg)
+			o.GlobalDataPaths = append(o.GlobalDataPaths, basedir(arg))
 		} else if flag == "d" || flag == "data" {
 			o.DataPaths = append(o.DataPaths, arg)
 		} else if flag == "dk" || flag == "datakey" && len(o.DataKey) == 0 {
@@ -125,7 +117,7 @@ func parseArgs(args []string, existing Options) (o Options) {
 		} else if flag == "sd" || flag == "sortdata" && len(o.SortData) == 0 {
 			o.SortData = arg
 		} else if flag == "cfg" || flag == "config" && len(o.ConfigFile) == 0 {
-			o.ConfigFile = arg
+			o.ConfigFile = basedir(arg)
 		} else if len(flag) == 0 {
 			// skip unknown flag arguments
 		} else {
@@ -135,4 +127,37 @@ func parseArgs(args []string, existing Options) (o Options) {
 	}
 
 	return
+}
+
+func parseConfig(fpath string, existing options) options {
+	var err error
+	var cfgf *os.File
+	if cfgf, err = os.Open(fpath); err != nil {
+		warn("error loading config file '%s': %s", fpath, err)
+		err = io.EOF
+	}
+	defer cfgf.Close()
+
+	var args []string
+	scanf := bufio.NewScanner(cfgf)
+	for scanf.Scan() {
+		for i, arg := range strings.Split(scanf.Text(), "=") {
+			arg = strings.TrimSpace(arg)
+			if i == 0 {
+				arg = "-" + arg
+			}
+			args = append(args, arg)
+		}
+	}
+	return parseArgs(args, existing)
+}
+
+func setDefaultOptions(o options) options {
+	if len(o.SortData) == 0 {
+		o.SortData = "filename"
+	}
+	if len(o.DataKey) == 0 {
+		o.DataKey = "data"
+	}
+	return o
 }
