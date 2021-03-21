@@ -1,4 +1,4 @@
-package main
+package suti
 
 /*
 	Copyright (C) 2021 gearsix <gearsix@tuta.io>
@@ -19,7 +19,7 @@ package main
 
 import (
 	"bytes"
-    "github.com/cbroglie/mustache"
+    mst "github.com/cbroglie/mustache"
 	"fmt"
 	hmpl "html/template"
 	"os"
@@ -36,88 +36,90 @@ func getTemplateType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-func loadTemplateFileTmpl(root string, partials ...string) (t *tmpl.Template, e error) {
+func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, error) {
 	var stat os.FileInfo
-	if t, e = tmpl.ParseFiles(root); e == nil {
-		for _, p := range partials {
-			ptype := getTemplateType(p)
-			stat, e = os.Stat(p)
-			
-			if e == nil {
-				if ptype == "tmpl" || ptype == "gotmpl" {
-					t, e = t.ParseFiles(p)
-				} else if strings.Contains(p, "*") {
-					t, e = t.ParseGlob(p)
-				} else if stat.IsDir() {
-					t, e = t.ParseGlob(p+"/*.tmpl")
-					t, e = t.ParseGlob(p+"/*.gotmpl")
-				} else {
-					e = fmt.Errorf("non-matching filetype")
-				}
-			}
-			
-			if e != nil {
-				warn("skipping partial '%s': %s", p, e)
+	t, e := tmpl.ParseFiles(root)
+
+	for i := 0; i < len(partials) && e == nil; i++ {
+		p := partials[i]
+		ptype := getTemplateType(p)
+
+		stat, e = os.Stat(p)
+		if e == nil {
+			if ptype == "tmpl" || ptype == "gotmpl" {
+				t, e = t.ParseFiles(p)
+			} else if strings.Contains(p, "*") {
+				t, e = t.ParseGlob(p)
+			} else if stat.IsDir() {
+				t, e = t.ParseGlob(p+"/*.tmpl")
+				t, e = t.ParseGlob(p+"/*.gotmpl")
+			} else {
+				return nil, fmt.Errorf("non-matching filetype")
 			}
 		}
 	}
-	return
+
+	return t, e
 }
 
-func loadTemplateFileHmpl(root string, partials ...string) (t *hmpl.Template, e error) {
+func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, error) {
 	var stat os.FileInfo
-	if t, e = hmpl.ParseFiles(root); e == nil {
-		for _, p := range partials {
-			ptype := getTemplateType(p)
-			stat, e = os.Stat(p)
-			
-			if e == nil {
-				if ptype == "hmpl" || ptype == "gohmpl" {
-					t, e = t.ParseFiles(p)
-				} else if strings.Contains(p, "*") {
-					t, e = t.ParseGlob(p)
-				} else if stat.IsDir() {
-					t, e = t.ParseGlob(p+"/*.hmpl")
-					t, e = t.ParseGlob(p+"/*.gohmpl")
-				} else {
-					e = fmt.Errorf("non-matching filetype")
-				}
-			}
-			
-			if e != nil {
-				warn("skipping partial '%s': %s", p, e)
-				e = nil
+	t, e := hmpl.ParseFiles(root)
+
+	for i := 0; i < len(partials) && e == nil; i++ {
+		p := partials[i]
+		ptype := getTemplateType(p)
+
+		stat, e = os.Stat(p)
+		if e == nil {
+			if ptype == "hmpl" || ptype == "gohmpl" {
+				t, e = t.ParseFiles(p)
+			} else if strings.Contains(p, "*") {
+				t, e = t.ParseGlob(p)
+			} else if stat.IsDir() {
+				t, e = t.ParseGlob(p+"/*.hmpl")
+				t, e = t.ParseGlob(p+"/*.gohmpl")
+			} else {
+				return nil, fmt.Errorf("non-matching filetype")
 			}
 		}
 	}
-	return
+
+	return t, e
 }
 
-func loadTemplateFileMst(root string, partials ...string) (t *mustache.Template, e error) {
+func loadTemplateFileMst(root string, partials ...string) (*mst.Template, error) {
+	var err error
 	for p, partial := range partials {
-		if stat, err := os.Stat(partial); err != nil {
+		if err != nil {
+			break
+		}
+
+		if stat, e := os.Stat(partial); e != nil {
 			partials = append(partials[:p], partials[p+1:]...)
-			warn("skipping partial '%s': %s", partial, e)
+			err = e
 		} else if stat.IsDir() == false {
 			partials[p] = filepath.Dir(partial)
 		} else if strings.Contains(partial, "*") {
-			if paths, err := filepath.Glob(partial); err != nil {
+			if paths, e := filepath.Glob(partial); e != nil {
 				partials = append(partials[:p], partials[p+1:]...)
-				warn("skipping partial '%s': %s", partial, e)
+				err = e
 			} else {
 				partials = append(partials[:p], partials[p+1:]...)
 				partials = append(partials, paths...)
 			}
 		}
 	}
-	
-	mstfp := &mustache.FileProvider{
-		Paths:      partials,
-		Extensions: []string{".mst", ".mustache"},
+
+	if err != nil {
+		return nil, err
 	}
-	t, e = mustache.ParseFilePartials(root, mstfp)
-	
-    return
+
+	mstfp := &mst.FileProvider{
+		Paths:      partials,
+		Extensions: []string{".mst", ".mst"},
+	}
+	return mst.ParseFilePartials(root, mstfp)
 }
 
 // LoadTemplateFile loads a Template from file `root`. All files in `partials`
@@ -134,7 +136,6 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 		return nil, fmt.Errorf("root path must be a file, not a directory: %s", root)
 	}
 
-	
 	ttype := getTemplateType(root)
 	if ttype == "tmpl" || ttype == "gotmpl" {
 		t, e = loadTemplateFileTmpl(root, partials...)
@@ -166,10 +167,10 @@ func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
 	} else {
 		err = fmt.Errorf("unable to infer template type '%s'", tt.String())
 	}
-	
+
 	if rval[0].IsNil() == false { // rval[0] = err
 		err = rval[0].Interface().(error)
 	}
-	
+
 	return
 }

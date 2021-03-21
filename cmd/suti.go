@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"os"
 	"strings"
+	"git.gearsix.net/suti"
 )
 
 type options struct {
@@ -39,27 +40,40 @@ type options struct {
 var opts options
 var cwd string
 
-func warn(msg string, args ...interface{}) {
-	fmt.Println("WARNING", strings.TrimSuffix(fmt.Sprintf(msg, args...), "\n"))
+func warn(err error, msg string, args ...interface{}) {
+	warning := "WARNING "
+	if len(msg) > 0 {
+		warning += strings.TrimSuffix(fmt.Sprintf(msg, args...), "\n")
+		if err != nil {
+			warning += ": "
+		}
+	}
+	if err != nil {
+		warning += err.Error()
+	}
+	fmt.Println(warning)
+}
+
+func assert(err error, msg string, args ...interface{}) {
+	if err != nil {
+		fmt.Printf("ERROR %s\n%s\n", strings.TrimSuffix(fmt.Sprintf(msg, args...), "\n"), err)
+		os.Exit(1)
+	}
 }
 
 func basedir(path string) string {
-	var err error
 	if !filepath.IsAbs(path) {
-		if path, err = filepath.Rel(cwd, path); err != nil {
-			warn("failed to parse path '%s': %s", path, err)
-		}
+		path = filepath.Join(cwd, path)
 	}
 	return path
 }
 
 func init() {
 	if len(os.Args) <= 1 {
-		print("nothing to do")
+		fmt.Println("nothing to do")
 		os.Exit(0)
 	}
 
-	cwd = "."
 	opts = parseArgs(os.Args[1:], options{})
 	if len(opts.ConfigFile) != 0 {
 		cwd = filepath.Dir(opts.ConfigFile)
@@ -69,17 +83,25 @@ func init() {
 }
 
 func main() {
-	gd := LoadDataFiles("", opts.GlobalDataPaths...)
-	d := LoadDataFiles(opts.SortData, opts.DataPaths...)
-	sd := GenerateSuperData(opts.DataKey, d, gd...)
-
-	if t, e := LoadTemplateFile(opts.RootPath, opts.PartialPaths...); e != nil {
-		warn("unable to load templates (%s)", e)
-	} else if out, err := ExecuteTemplate(t, sd); err != nil {
-		warn("failed to execute template '%s' (%s)", opts.RootPath, err)
-	} else {
-		fmt.Println(out.String())
+	data, err := suti.LoadDataFiles("", opts.GlobalDataPaths...)
+	assert(err, "failed to load global data files")
+	global, conflicts := suti.MergeData(data...)
+	for _, key := range conflicts {
+		warn(nil, "merge conflict for global data key: '%s'", key)
 	}
+
+	data, err = suti.LoadDataFiles(opts.SortData, opts.DataPaths...)
+	assert(err, "failed to load data files")
+
+	super, err := suti.GenerateSuperData(opts.DataKey, global, data)
+	assert(err, "failed to generate super data")
+
+	template, err := suti.LoadTemplateFile(opts.RootPath, opts.PartialPaths...)
+	assert(err, "unable to load templates")
+
+	out, err := suti.ExecuteTemplate(template, super)
+	assert(err, "failed to execute template '%s'", opts.RootPath)
+	fmt.Print(out.String())
 
 	return
 }
@@ -99,7 +121,7 @@ func parseArgs(args []string, existing options) (o options) {
 			}
 
 			if ndelims > 2 {
-				warn("bad flag syntax: '%s'", arg)
+				warn(nil, "bad flag syntax: '%s'", arg)
 				flag = ""
 			}
 
@@ -111,7 +133,7 @@ func parseArgs(args []string, existing options) (o options) {
 		} else if flag == "gd" || flag == "globaldata" {
 			o.GlobalDataPaths = append(o.GlobalDataPaths, basedir(arg))
 		} else if flag == "d" || flag == "data" {
-			o.DataPaths = append(o.DataPaths, arg)
+			o.DataPaths = append(o.DataPaths, basedir(arg))
 		} else if flag == "dk" || flag == "datakey" && len(o.DataKey) == 0 {
 			o.DataKey = arg
 		} else if flag == "sd" || flag == "sortdata" && len(o.SortData) == 0 {
@@ -121,7 +143,7 @@ func parseArgs(args []string, existing options) (o options) {
 		} else if len(flag) == 0 {
 			// skip unknown flag arguments
 		} else {
-			warn("ignoring flag: '%s'", flag)
+			warn(nil, "ignoring flag: '%s'", flag)
 			flag = ""
 		}
 	}
@@ -133,7 +155,7 @@ func parseConfig(fpath string, existing options) options {
 	var err error
 	var cfgf *os.File
 	if cfgf, err = os.Open(fpath); err != nil {
-		warn("error loading config file '%s': %s", fpath, err)
+		warn(err, "error loading config file '%s'", fpath)
 		err = io.EOF
 	}
 	defer cfgf.Close()

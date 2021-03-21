@@ -1,4 +1,4 @@
-package main
+package suti
 
 /*
 	Copyright (C) 2021 gearsix <gearsix@tuta.io>
@@ -103,7 +103,11 @@ func TestLoadData(t *testing.T) {
 	return
 }
 
-func validateFileData(t *testing.T, d []Data, dlen int, orderedLangs ...string) {
+func validateFileData(t *testing.T, e error, d []Data, dlen int, orderedLangs ...string) {
+	if e != nil {
+		t.Error(e)
+	}
+
 	if dlen != len(orderedLangs) {
 		t.Errorf("invalid orderedLangs length (%d should be %d)", len(orderedLangs), dlen)
 	}
@@ -118,6 +122,7 @@ func validateFileData(t *testing.T, d []Data, dlen int, orderedLangs ...string) 
 }
 
 func TestLoadDataFiles(t *testing.T) {
+	var e error
 	var p []string
 	var d []Data
 	tdir := t.TempDir()
@@ -130,37 +135,40 @@ func TestLoadDataFiles(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	p = append(p, tdir+"/good.toml")
 	writeTestFile(t, p[len(p)-1], good["toml"])
-	time.Sleep(100 * time.Millisecond)
+
+	d, e = LoadDataFiles("filename", tdir)
+	validateFileData(t, e, d, len(p), "yaml", "json", "toml")
+
+	d, e = LoadDataFiles("filename-desc", tdir+"/*")
+	validateFileData(t, e, d, len(p), "toml", "json", "yaml")
+
+	d, e = LoadDataFiles("modified", p...)
+	validateFileData(t, e, d, len(p), "yaml", "json", "toml")
+
+	d, e = LoadDataFiles("modified-desc", p...)
+	validateFileData(t, e, d, len(p), "toml", "json", "yaml")
+
 	p = append(p, tdir+"/bad.json")
 	writeTestFile(t, p[len(p)-1], badData)
-
-	d = LoadDataFiles("filename", tdir)
-	validateFileData(t, d, len(p)-1, "yaml", "json", "toml")
-
-	d = LoadDataFiles("filename-desc", tdir+"/*")
-	validateFileData(t, d, len(p)-1, "toml", "json", "yaml")
-
-	d = LoadDataFiles("modified", p...)
-	validateFileData(t, d, len(p)-1, "yaml", "json", "toml")
-
-	d = LoadDataFiles("modified-desc", p...)
-	validateFileData(t, d, len(p)-1, "toml", "json", "yaml")
+	if _, e = LoadDataFiles("modified-desc", p...); e == nil {
+		t.Error("bad.json passed")
+	}
 }
 
 func TestGenerateSuperData(t *testing.T) {
 	var data Data
 	var e error
-	var gd []Data
+	var gd Data
 	var d []Data
 	var sd Data
 
 	if data, e = LoadData("json", strings.NewReader(good["json"])); e == nil {
-		gd = append(gd, data)
+		gd = data
 	} else {
 		t.Skip("setup failure:", e)
 	}
-	if data, e = LoadData("json", strings.NewReader(good["json"])); e == nil { // test duplicate
-		gd = append(gd, data)
+	if data, e = LoadData("json", strings.NewReader(good["json"])); e == nil {
+		d = append(d, data)
 	} else {
 		t.Skip("setup failure:", e)
 	}
@@ -170,7 +178,10 @@ func TestGenerateSuperData(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	sd = GenerateSuperData("testdata", d, gd...)
+	sd, e = GenerateSuperData("testdata",  gd, d)
+	if e != nil {
+		t.Error(e)
+	}
 	if sd["testdata"] == nil {
 		t.Log(sd)
 		t.Error("datakey is empty")
@@ -188,6 +199,7 @@ func TestMergeData(t *testing.T) {
 	var e error
 	var d []Data
 	var m Data
+	var c []string
 
 	if m, e = LoadData("json", strings.NewReader(good["json"])); e == nil {
 		d = append(d, m)
@@ -205,8 +217,11 @@ func TestMergeData(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	m = MergeData(d...)
+	m, c = MergeData(d...)
 	if m["eg"] == nil {
 		t.Error("missing global keys")
+	}
+	if len(c) == 0 {
+		t.Errorf("conflicting keys were not reported")
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package suti
 
 /*
 	Copyright (C) 2021 gearsix <gearsix@tuta.io>
@@ -38,18 +38,20 @@ func getDataType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-func loadGlobPaths(paths ...string) []string {
+func loadGlobPaths(paths ...string) ([]string, error) {
+	var err error
+	var glob []string
 	for p, path := range paths {
 		if strings.Contains(path, "*") {
-			if glob, e := filepath.Glob(path); e == nil {
+			if glob, err = filepath.Glob(path); err == nil {
 				paths = append(paths, glob...)
-				paths = append(paths[:p], paths[p+1:]...)
-			} else {
-				warn("error parsing glob '%s': %s", path, e)
+				if len(glob) > 0 {
+					paths = append(paths[:p], paths[p+1:]...)
+				}
 			}
 		}
 	}
-	return paths
+	return paths, err
 }
 
 // LoadData reads all data from `in` and loads it in the format set in `lang`.
@@ -78,57 +80,48 @@ func LoadData(lang string, in io.Reader) (d Data, e error) {
 // format of that files file extension (e.g. "x.json" will be loaded as a json).
 func LoadDataFile(path string) (d Data, e error) {
 	var f *os.File
-	if f, e = os.Open(path); e != nil {
-		warn("could not load data file '%s' (%s)", path, e)
-	} else {
-		defer f.Close()
+	if f, e = os.Open(path); e == nil {
 		d, e = LoadData(getDataType(path), f)
 	}
+	f.Close()
 	return
 }
 
 // LoadDataFiles loads all files in `paths` recursively and sorted them in
 // `order`.
-func LoadDataFiles(order string, paths ...string) []Data {
-	var err error
+func LoadDataFiles(order string, paths ...string) (data []Data, err error) {
 	var stat os.FileInfo
-	var d Data
+
+	paths, err = loadGlobPaths(paths...)
 
 	loaded := make(map[string]Data)
 
-	paths = loadGlobPaths(paths...)
-
-	for _, path := range paths {
-		stat, err = os.Stat(path)
-		if err == nil {
+	for i := 0; i < len(paths) && err == nil; i++ {
+		path := paths[i]
+		if stat, err = os.Stat(path); err == nil {
 			if stat.IsDir() {
 				err = filepath.Walk(path,
 					func(p string, fi os.FileInfo, e error) error {
 						if e == nil && !fi.IsDir() {
-							if d, e = LoadDataFile(p); e == nil {
-								loaded[p] = d
-							} else {
-								warn("skipping data file '%s' (%s)", p, e)
-								e = nil
-							}
+							loaded[p], e = LoadDataFile(p)
 						}
 						return e
 					})
-				if err != nil {
-					warn("error loading files in %s (%s)", path, err)
-				}
-			} else if d, err = LoadDataFile(path); err == nil {
-				loaded[path] = d
 			} else {
-				warn("skipping data file '%s' (%s)", path, err)
+				loaded[path], err = LoadDataFile(path)
 			}
 		}
 	}
 
-	return sortFileData(loaded, order)
+	if err == nil {
+		data, err = sortFileData(loaded, order)
+	}
+
+	return data, err
 }
 
-func sortFileData(data map[string]Data, order string) []Data {
+func sortFileData(data map[string]Data, order string) ([]Data, error) {
+	var err error
 	sorted := make([]Data, 0, len(data))
 
 	if strings.HasPrefix(order, "filename") {
@@ -141,11 +134,11 @@ func sortFileData(data map[string]Data, order string) []Data {
 		}
 	} else if strings.HasPrefix(order, "modified") {
 		if order == "modified-desc" {
-			sorted = sortFileDataModified("desc", data)
+			sorted, err = sortFileDataModified("desc", data)
 		} else if order == "modified-asc" {
-			sorted = sortFileDataModified("asc", data)
+			sorted, err = sortFileDataModified("asc", data)
 		} else {
-			sorted = sortFileDataModified("asc", data)
+			sorted, err = sortFileDataModified("asc", data)
 		}
 	} else {
 		for _, d := range data {
@@ -153,11 +146,12 @@ func sortFileData(data map[string]Data, order string) []Data {
 		}
 	}
 
-	return sorted
+	return sorted, err
 }
 
 func sortFileDataFilename(direction string, data map[string]Data) []Data {
 	sorted := make([]Data, 0, len(data))
+
 	fnames := make([]string, 0, len(data))
 	for fpath := range data {
 		fnames = append(fnames, filepath.Base(fpath))
@@ -181,15 +175,17 @@ func sortFileDataFilename(direction string, data map[string]Data) []Data {
 			}
 		}
 	}
+
 	return sorted
 }
 
-func sortFileDataModified(direction string, data map[string]Data) []Data {
+func sortFileDataModified(direction string, data map[string]Data) ([]Data, error) {
 	sorted := make([]Data, 0, len(data))
+
 	stats := make(map[string]os.FileInfo)
 	for fpath := range data {
 		if stat, err := os.Stat(fpath); err != nil {
-			warn("failed to stat %s (%s)", fpath, err)
+			return nil, err
 		} else {
 			stats[fpath] = stat
 		}
@@ -199,6 +195,7 @@ func sortFileDataModified(direction string, data map[string]Data) []Data {
 	for _, stat := range stats {
 		modtimes = append(modtimes, stat.ModTime())
 	}
+
 	if direction == "desc" {
 		sort.Slice(modtimes, func(i, j int) bool {
 			return modtimes[i].After(modtimes[j])
@@ -219,38 +216,40 @@ func sortFileDataModified(direction string, data map[string]Data) []Data {
 		}
 	}
 
-	return sorted
+	return sorted, nil
 }
 
 // GenerateSuperData merges all `global` Data and then adds `d` to the merged
 // structure under the key provided in `datakey`.
-func GenerateSuperData(datakey string, d []Data, global ...Data) (superd Data) {
+func GenerateSuperData(datakey string, global Data, data []Data) (super Data, err error) {
+	super = global
+
 	if len(datakey) == 0 {
 		datakey = "data"
 	}
-	superd = MergeData(global...)
 
-	if superd[datakey] != nil {
-		warn("global data has a key matching the datakey ('%s')\n",
-			"this value of this key will be overwritten")
+	if super[datakey] != nil {
+		err = fmt.Errorf("datakey '%s' already exists", datakey)
+	} else {
+		super[datakey] = data
 	}
-	superd[datakey] = d
+
 	return
 }
 
 // MergeData combines all keys in `data` into a single Data object. If there's
 // a conflict (duplicate key), the first found value is kept and the conflicting
 // values are ignored.
-func MergeData(data ...Data) Data {
-	merged := make(Data)
+func MergeData(data ...Data) (merged Data, conflicts []string) {
+	merged = make(Data)
 	for _, d := range data {
-		for k, v := range d {
-			if merged[k] == nil {
-				merged[k] = v
+		for key, val := range d {
+			if merged[key] == nil {
+				merged[key] = val
 			} else {
-				warn("merge conflict for data key '%s'", k)
+				conflicts = append(conflicts, key)
 			}
 		}
 	}
-	return merged
+	return
 }

@@ -1,4 +1,4 @@
-package main
+package suti
 
 /*
 	Copyright (C) 2021 gearsix <gearsix@tuta.io>
@@ -143,8 +143,8 @@ func validateExecuteTemplate(t *testing.T, results string, expect string, e erro
 
 func TestExecuteTemplate(t *testing.T) {
 	var e error
-	var sd, data Data
-	var gd, d []Data
+	var sd, gd, data Data
+	var d []Data
 	var tmplr, tmplp, hmplr, hmplp, mstr, mstp string
 	var tmpl1, tmpl2, hmpl1, hmpl2, mst1, mst2 Template
 	var results bytes.Buffer
@@ -166,7 +166,7 @@ func TestExecuteTemplate(t *testing.T) {
 	if data, e = LoadData("json", strings.NewReader(good["json"])); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	gd = append(gd, data)
+	gd = data
 	if data, e = LoadData("yaml", strings.NewReader(good["yaml"])); e != nil {
 		t.Skip("setup failure:", e)
 	}
@@ -176,7 +176,9 @@ func TestExecuteTemplate(t *testing.T) {
 	}
 	d = append(d, data)
 
-	sd = GenerateSuperData("", d, gd...)
+	if sd, e = GenerateSuperData("", gd, d); e != nil {
+		t.Skip("setup failure:", e)
+	}
 	if tmpl1, e = LoadTemplateFile(tmplr, tmplp); e != nil {
 		t.Skip("setup failure:", e)
 	}
@@ -195,7 +197,7 @@ func TestExecuteTemplate(t *testing.T) {
 	if mst2, e = LoadTemplateFile(tmplr, tdir); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	
+
 	results, e = ExecuteTemplate(tmpl1, sd)
 	validateExecuteTemplate(t, results.String(), tmplResult, e)
 	results, e = ExecuteTemplate(tmpl2, sd)
@@ -205,7 +207,7 @@ func TestExecuteTemplate(t *testing.T) {
 	validateExecuteTemplate(t, results.String(), hmplResult, e)
 	results, e = ExecuteTemplate(hmpl2, sd)
 	validateExecuteTemplate(t, results.String(), tmplResult, e)
-	
+
 	results, e = ExecuteTemplate(mst1, sd)
 	validateExecuteTemplate(t, results.String(), mstResult, e)
 	results, e = ExecuteTemplate(mst2, sd)
