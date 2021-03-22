@@ -1,26 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>{{.Title}}</title>
-		<meta charset="UTF-8" />
-		<meta name="author" content="{{.Author}}" />
-		<meta name="description" content="{{.Description}}" />
-	</head>
-	<body>
-		<h1>{{.Title}}</h1>
-		<p>
-			{{.Description}}
-			<address>{{.Author}}</address>
-		</p>
+  <head>
+    <title>{{.Title}}</title>
+    <meta charset="UTF-8" />
+    <meta name="author" content="{{.Author}}" />
+    <meta name="description" content="{{.Description}}" />
+  </head>
+  <body>
+    <h1>{{.Title}}</h1>
+    <p>
+      {{.Description}}
+      <address>{{.Author}}</address>
+    </p>
 
-		<main>{{range $i, $l := .logfiles}}
-			<hr />
-			<dl>
-				<dt><b>Stardate:</b></dt><dd>{{$l.Stardate}}</dd>
-				<dt><b>Starship:</b></dt><dd>{{$l.Starship}}</dd>
-				<dt><b>Captain:</b></dt><dd>{{$l.Captain}}</dd>
-			</dl>
-			{{range $nlogs, $log := $l.Logs}}<p>{{$log}}</p>{{end}}
-		{{end}}</main>
-	</body>
+    <main>{{range $i, $l := .logfiles}}
+      <hr />
+
+      <dl>
+        <dt><b>Stardate:</b></dt><dd>{{$l.Stardate}}</dd>
+        <dt><b>Starship:</b></dt><dd>{{$l.Starship}}</dd>
+        <dt><b>Captain:</b></dt><dd>{{$l.Captain}}</dd>
+      </dl>{{if $l.Logs}}{{$nlogs := len $l.Logs}}{{range $n, $log := $l.Logs}}
+      <p>{{$log}}</p>{{end}}{{else}}<p>&lt;no entries&gt;{{end}}
+    {{end}}</main>
+  </body>
 </html>

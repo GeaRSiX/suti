@@ -9,3 +9,5 @@ An example of how you can run one of these examples:
 	suti -cfg suti.cfg -r templates/html.tmpl > out.html
 
 Then open out.html to see the results.
+
+See the resulting html file hosted here: gearsix.net/star-trek-logs/tos.html
