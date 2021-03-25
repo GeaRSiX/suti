@@ -106,6 +106,46 @@ func main() {
 	return
 }
 
+func help() {
+	fmt.Println("Usage: suti [OPTIONS]\n")
+
+	fmt.Print("Options")
+	fmt.Print(`
+   -r path, -root path  
+    path of template file to execute against.
+
+  -p path..., -partial path...  
+    path of (multiple) template files that are called upon by at least one
+    root template. If a directory is passed then all files within that
+    directory will (recursively) be loaded.
+
+  -gd path..., -global-data path...  
+    path of (multiple) data files to load as "global data". If a directory is
+    passed then all files within that directory will (recursively) be loaded.
+
+  -d path..., -data path...  
+   path of (multiple) data files to load as "data". If a directory is passed
+   then all files within that directory will (recursively) be loaded.
+
+  -dk name, -data-key name  
+    set the name of the key used for the generated array of data (default:
+    "data")
+
+  -sd attribute, -sort-data attribute  
+    The file attribute to order data files by. If no value is provided, the data
+    will be provided in the order it's loaded.
+    Accepted values: "filename", "modified".
+    A suffix can be appended to each value to set the sort order: "-asc" (for
+    ascending), "-desc" (for descending). If not specified, this defaults to
+    "-asc".
+  -cfg file, -config file  
+    A data file to provide default values for the above options (see CONFIG).
+
+`)
+
+	fmt.Println("See doc/suti.txt for further details")
+}
+
 // custom arg parser because golang.org/pkg/flag doesn't support list args
 func parseArgs(args []string, existing options) (o options) {
 	o = existing
@@ -131,7 +171,12 @@ func parseArgs(args []string, existing options) (o options) {
 				args[a] = split[1]
 				a--
 			}
+
 			// set valid any flags that don't take arguments here
+			if flag == "h" || flag == "help" {
+				help()
+				os.Exit(0)
+			}
 		} else if (flag == "r" || flag == "root") && len(o.RootPath) == 0 {
 			o.RootPath = basedir(arg)
 		} else if flag == "p" || flag == "partial" {
