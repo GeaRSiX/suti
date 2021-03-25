@@ -18,7 +18,6 @@ DESCRIPTION
   The used libraries are listed below for credit/reference.
   
   suti can also be imported as a golang package to be used as a library.
-  See suti-lib for details.
  
 OPTIONS
   -r path, -root path  
@@ -48,6 +47,7 @@ OPTIONS
     A suffix can be appended to each value to set the sort order: "-asc" (for
     ascending), "-desc" (for descending). If not specified, this defaults to
     "-asc".
+
   -cfg file, -config file  
     A data file to provide default values for the above options (see CONFIG).
 
@@ -109,7 +109,12 @@ SUPPORTED LANGUAGES
     - statix (.stx .statix), see https://gist.github.com/plugnburn/c2f7cc3807e8934b179e
 
 EXAMPLES
-  // TODO
+
+	suti -cfg ./suti.cfg -r templates/textfile.mst
+
+	suti -r homepage.hmpl -p head.hmpl -p body.hmpl -gd meta.json -d posts/*
+
+  see the examples/ directory in the suti repository for a cool example.
 
 LIBRARIES
   As stated above, all of these libraries do the hard work, suti just combines
@@ -119,9 +124,6 @@ LIBRARIES
   - github.com/pelletier/go-toml
   - gopkg.in/yaml.v3
   - github.com/cbroglie/mustache
-
-SEE ALSO
-  libsuti(3)
 
 AUTHORS
   - gearsix <gearsix@tuta.io>
