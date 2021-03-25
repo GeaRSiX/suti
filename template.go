@@ -127,7 +127,7 @@ func loadTemplateFileMst(root string, partials ...string) (*mst.Template, error)
 // parsed and associated with the parsed root template.
 func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
-		return nil, fmt.Errorf("no root tempslate specified")
+		return nil, fmt.Errorf("no root template specified")
 	}
 
 	if stat, err := os.Stat(root); err != nil {
