@@ -20,11 +20,11 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"path/filepath"
-	"os"
-	"strings"
 	"git.gearsix.net/suti"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type options struct {
@@ -125,6 +125,12 @@ func parseArgs(args []string, existing options) (o options) {
 				flag = ""
 			}
 
+			if strings.Contains(flag, "=") {
+				split := strings.SplitN(flag, "=", 2)
+				flag = split[0]
+				args[a] = split[1]
+				a--
+			}
 			// set valid any flags that don't take arguments here
 		} else if (flag == "r" || flag == "root") && len(o.RootPath) == 0 {
 			o.RootPath = basedir(arg)
