@@ -1,20 +1,20 @@
 package suti
 
 /*
-	Copyright (C) 2021 gearsix <gearsix@tuta.io>
+Copyright (C) 2021 gearsix <gearsix@tuta.io>
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import (
@@ -56,19 +56,19 @@ func loadGlobPaths(paths ...string) ([]string, error) {
 
 // LoadData reads all data from `in` and loads it in the format set in `lang`.
 func LoadData(lang string, in io.Reader) (d Data, e error) {
-	var fbuf []byte
-	if fbuf, e = ioutil.ReadAll(in); e != nil {
+	var inbuf []byte
+	if inbuf, e = ioutil.ReadAll(in); e != nil {
 		return make(Data), e
-	} else if len(fbuf) == 0 {
+	} else if len(inbuf) == 0 {
 		return make(Data), nil
 	}
 
 	if lang == "json" {
-		e = json.Unmarshal(fbuf, &d)
+		e = json.Unmarshal(inbuf, &d)
 	} else if lang == "yaml" {
-		e = yaml.Unmarshal(fbuf, &d)
+		e = yaml.Unmarshal(inbuf, &d)
 	} else if lang == "toml" {
-		e = toml.Unmarshal(fbuf, &d)
+		e = toml.Unmarshal(inbuf, &d)
 	} else {
 		e = fmt.Errorf("'%s' is not a supported data language", lang)
 	}

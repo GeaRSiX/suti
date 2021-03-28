@@ -1,26 +1,26 @@
 package suti
 
 /*
-	Copyright (C) 2021 gearsix <gearsix@tuta.io>
+Copyright (C) 2021 gearsix <gearsix@tuta.io>
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import (
 	"bytes"
-    mst "github.com/cbroglie/mustache"
 	"fmt"
+	mst "github.com/cbroglie/mustache"
 	hmpl "html/template"
 	"os"
 	"path/filepath"
@@ -51,8 +51,8 @@ func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, erro
 			} else if strings.Contains(p, "*") {
 				t, e = t.ParseGlob(p)
 			} else if stat.IsDir() {
-				t, e = t.ParseGlob(p+"/*.tmpl")
-				t, e = t.ParseGlob(p+"/*.gotmpl")
+				t, e = t.ParseGlob(p + "/*.tmpl")
+				t, e = t.ParseGlob(p + "/*.gotmpl")
 			} else {
 				return nil, fmt.Errorf("non-matching filetype")
 			}
@@ -77,8 +77,8 @@ func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, erro
 			} else if strings.Contains(p, "*") {
 				t, e = t.ParseGlob(p)
 			} else if stat.IsDir() {
-				t, e = t.ParseGlob(p+"/*.hmpl")
-				t, e = t.ParseGlob(p+"/*.gohmpl")
+				t, e = t.ParseGlob(p + "/*.hmpl")
+				t, e = t.ParseGlob(p + "/*.gohmpl")
 			} else {
 				return nil, fmt.Errorf("non-matching filetype")
 			}
@@ -141,8 +141,8 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 		t, e = loadTemplateFileTmpl(root, partials...)
 	} else if ttype == "hmpl" || ttype == "gohmpl" {
 		t, e = loadTemplateFileHmpl(root, partials...)
-    } else if ttype == "mst" || ttype == "mustache" {
-        t, e = loadTemplateFileMst(root, partials...)
+	} else if ttype == "mst" || ttype == "mustache" {
+		t, e = loadTemplateFileMst(root, partials...)
 	} else {
 		e = fmt.Errorf("'%s' is not a supported template language", ttype)
 	}

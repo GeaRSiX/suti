@@ -1,22 +1,21 @@
 package suti
 
 /*
-	Copyright (C) 2021 gearsix <gearsix@tuta.io>
+Copyright (C) 2021 gearsix <gearsix@tuta.io>
 
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+at your option) any later version.
 
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
 
 import (
 	"encoding/json"
@@ -31,9 +30,9 @@ import (
 var good = map[string]string{
 	"json": `{"eg":0}`,
 	"yaml": `eg: 0
-`,
+	`,
 	"toml": `eg = 0
-`,
+	`,
 }
 
 const badData = `{"json"!:2:]}}`
@@ -178,7 +177,7 @@ func TestGenerateSuperData(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	sd, e = GenerateSuperData("testdata",  gd, d)
+	sd, e = GenerateSuperData("testdata", gd, d)
 	if e != nil {
 		t.Error(e)
 	}
