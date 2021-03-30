@@ -30,9 +30,9 @@ import (
 var good = map[string]string{
 	"json": `{"eg":0}`,
 	"yaml": `eg: 0
-	`,
+`,
 	"toml": `eg = 0
-	`,
+`,
 }
 
 const badData = `{"json"!:2:]}}`

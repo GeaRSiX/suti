@@ -22,6 +22,7 @@ import (
 	"fmt"
 	mst "github.com/cbroglie/mustache"
 	hmpl "html/template"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -51,8 +52,15 @@ func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, erro
 			} else if strings.Contains(p, "*") {
 				t, e = t.ParseGlob(p)
 			} else if stat.IsDir() {
-				t, e = t.ParseGlob(p + "/*.tmpl")
-				t, e = t.ParseGlob(p + "/*.gotmpl")
+				e = filepath.Walk(p, func(path string, info fs.FileInfo, err error) error {
+					if err == nil {
+						ptype = getTemplateType(path)
+						if ptype == "tmpl" || ptype == "gotmpl" {
+							t, err = t.ParseFiles(path)
+						}
+					}
+					return err
+				})
 			} else {
 				return nil, fmt.Errorf("non-matching filetype")
 			}
@@ -77,8 +85,15 @@ func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, erro
 			} else if strings.Contains(p, "*") {
 				t, e = t.ParseGlob(p)
 			} else if stat.IsDir() {
-				t, e = t.ParseGlob(p + "/*.hmpl")
-				t, e = t.ParseGlob(p + "/*.gohmpl")
+				e = filepath.Walk(p, func(path string, info fs.FileInfo, err error) error {
+					if err == nil {
+						ptype = getTemplateType(path)
+						if ptype == "hmpl" || ptype == "gohmpl" {
+							t, err = t.ParseFiles(path)
+						}
+					}
+					return err
+				})
 			} else {
 				return nil, fmt.Errorf("non-matching filetype")
 			}

@@ -135,8 +135,7 @@ func TestLoadTemplateFile(t *testing.T) {
 func validateExecuteTemplate(t *testing.T, results string, expect string, e error) {
 	if e != nil {
 		t.Error(e)
-	}
-	if results != expect {
+	} else if results != expect {
 		t.Errorf("invalid results: '%s' should match '%s'", results, expect)
 	}
 }
