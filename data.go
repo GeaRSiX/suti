@@ -219,8 +219,7 @@ func sortFileDataModified(direction string, data map[string]Data) ([]Data, error
 	return sorted, nil
 }
 
-// GenerateSuperData merges all `global` Data and then adds `d` to the merged
-// structure under the key provided in `datakey`.
+// GenerateSuperData simply addeds a key named `datakey` to `global` and assigns `data` to it
 func GenerateSuperData(datakey string, global Data, data []Data) (super Data, err error) {
 	super = global
 
