@@ -20,8 +20,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"git.gearsix.net/suti"
 	"io"
+	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
 	"strings"

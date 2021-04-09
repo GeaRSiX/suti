@@ -1,4 +1,4 @@
-module git.gearsix.net/suti
+module notabug.org/gearsix/suti
 
 go 1.16
 
