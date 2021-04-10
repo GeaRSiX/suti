@@ -84,6 +84,9 @@ func LoadDataFile(path string) (d Data, e error) {
 		d, e = LoadData(getDataType(path), f)
 	}
 	f.Close()
+	if e != nil {
+		e = fmt.Errorf("failed to load data '%s':", e.Error())
+	}
 	return
 }
 
