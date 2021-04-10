@@ -31,7 +31,9 @@ import (
 )
 
 // Template is a generic interface container for any template type
-type Template interface{}
+type Template struct {
+	Template interface{}
+}
 
 func getTemplateType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
@@ -142,33 +144,37 @@ func loadTemplateFileMst(root string, partials ...string) (*mst.Template, error)
 // parsed and associated with the parsed root template.
 func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
-		return nil, fmt.Errorf("no root template specified")
+		e = fmt.Errorf("no root template specified")
 	}
 
 	if stat, err := os.Stat(root); err != nil {
-		return nil, err
+		e = err
 	} else if stat.IsDir() {
-		return nil, fmt.Errorf("root path must be a file, not a directory: %s", root)
+		e = fmt.Errorf("root path must be a file, not a directory: %s", root)
 	}
 
-	ttype := getTemplateType(root)
-	if ttype == "tmpl" || ttype == "gotmpl" {
-		t, e = loadTemplateFileTmpl(root, partials...)
-	} else if ttype == "hmpl" || ttype == "gohmpl" {
-		t, e = loadTemplateFileHmpl(root, partials...)
-	} else if ttype == "mst" || ttype == "mustache" {
-		t, e = loadTemplateFileMst(root, partials...)
-	} else {
-		e = fmt.Errorf("'%s' is not a supported template language", ttype)
+	if e == nil {
+		t = Template{}
+		ttype := getTemplateType(root)
+		if ttype == "tmpl" || ttype == "gotmpl" {
+			t.Template, e = loadTemplateFileTmpl(root, partials...)
+		} else if ttype == "hmpl" || ttype == "gohmpl" {
+			t.Template, e = loadTemplateFileHmpl(root, partials...)
+		} else if ttype == "mst" || ttype == "mustache" {
+			t.Template, e = loadTemplateFileMst(root, partials...)
+		} else {
+			e = fmt.Errorf("'%s' is not a supported template language", ttype)
+		}
 	}
+
 	return
 }
 
 // ExecuteTemplate executes `t` against `d`. Reflection is used to determine
 // the template type and call it's execution fuction.
-func ExecuteTemplate(t Template, d Data) (result bytes.Buffer, err error) {
-	tv := reflect.ValueOf(t)
-	tt := reflect.TypeOf(t)
+func (t *Template) ExecuteTemplate(d Data) (result bytes.Buffer, err error) {
+	tv := reflect.ValueOf(t.Template)
+	tt := reflect.TypeOf(t.Template)
 
 	var rval []reflect.Value
 	if tt.String() == "*template.Template" { // tmpl or hmpl

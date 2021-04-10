@@ -54,7 +54,7 @@ func validateTemplateFile(t *testing.T, template Template, root string, partials
 	}
 
 	ttype := getTemplateType(root)
-	if reflect.TypeOf(template).String() != types[ttype] {
+	if reflect.TypeOf(template.Template).String() != types[ttype] {
 		t.Error("invalid template loaded")
 	}
 
@@ -62,16 +62,16 @@ func validateTemplateFile(t *testing.T, template Template, root string, partials
 		var rv []reflect.Value
 		for _, p := range partials {
 			p = filepath.Base(p)
-			rv := reflect.ValueOf(template).MethodByName("Lookup").Call([]reflect.Value{
+			rv := reflect.ValueOf(template.Template).MethodByName("Lookup").Call([]reflect.Value{
 				reflect.ValueOf(p),
 			})
 			if rv[0].IsNil() {
 				t.Errorf("missing defined template '%s'", p)
-				rv = reflect.ValueOf(template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
+				rv = reflect.ValueOf(template.Template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
 				t.Log(rv)
 			}
 		}
-		rv = reflect.ValueOf(template).MethodByName("Name").Call([]reflect.Value{})
+		rv = reflect.ValueOf(template.Template).MethodByName("Name").Call([]reflect.Value{})
 		if rv[0].String() != filepath.Base(root) {
 			t.Errorf("invalid template name: %s does not match %s",
 				rv[0].String(), filepath.Base(root))
@@ -197,18 +197,18 @@ func TestExecuteTemplate(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	results, e = ExecuteTemplate(tmpl1, sd)
+	results, e = tmpl1.ExecuteTemplate(sd)
 	validateExecuteTemplate(t, results.String(), tmplResult, e)
-	results, e = ExecuteTemplate(tmpl2, sd)
+	results, e = tmpl2.ExecuteTemplate(sd)
 	validateExecuteTemplate(t, results.String(), tmplResult, e)
 
-	results, e = ExecuteTemplate(hmpl1, sd)
+	results, e = hmpl1.ExecuteTemplate(sd)
 	validateExecuteTemplate(t, results.String(), hmplResult, e)
-	results, e = ExecuteTemplate(hmpl2, sd)
+	results, e = hmpl2.ExecuteTemplate(sd)
 	validateExecuteTemplate(t, results.String(), tmplResult, e)
 
-	results, e = ExecuteTemplate(mst1, sd)
+	results, e = mst1.ExecuteTemplate(sd)
 	validateExecuteTemplate(t, results.String(), mstResult, e)
-	results, e = ExecuteTemplate(mst2, sd)
+	results, e = mst2.ExecuteTemplate(sd)
 	validateExecuteTemplate(t, results.String(), mstResult, e)
 }
