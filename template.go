@@ -55,7 +55,7 @@ func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, erro
 				t, e = t.ParseGlob(p)
 			} else if stat.IsDir() {
 				e = filepath.Walk(p, func(path string, info fs.FileInfo, err error) error {
-					if err == nil {
+					if err == nil && !info.IsDir() {
 						ptype = getTemplateType(path)
 						if ptype == "tmpl" || ptype == "gotmpl" {
 							t, err = t.ParseFiles(path)
@@ -88,7 +88,7 @@ func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, erro
 				t, e = t.ParseGlob(p)
 			} else if stat.IsDir() {
 				e = filepath.Walk(p, func(path string, info fs.FileInfo, err error) error {
-					if err == nil {
+					if err == nil && !info.IsDir() {
 						ptype = getTemplateType(path)
 						if ptype == "hmpl" || ptype == "gohmpl" {
 							t, err = t.ParseFiles(path)
@@ -134,7 +134,7 @@ func loadTemplateFileMst(root string, partials ...string) (*mst.Template, error)
 
 	mstfp := &mst.FileProvider{
 		Paths:      partials,
-		Extensions: []string{".mst", ".mst"},
+		Extensions: []string{".mst", ".mustache"},
 	}
 	return mst.ParseFilePartials(root, mstfp)
 }
@@ -179,11 +179,11 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	var rval []reflect.Value
 	if tt.String() == "*template.Template" { // tmpl or hmpl
 		rval = tv.MethodByName("Execute").Call([]reflect.Value{
-			reflect.ValueOf(&result), reflect.ValueOf(&d),
+			reflect.ValueOf(&result), reflect.ValueOf(d),
 		})
 	} else if tt.String() == "*mustache.Template" { // mustache
 		rval = tv.MethodByName("FRender").Call([]reflect.Value{
-			reflect.ValueOf(&result), reflect.ValueOf(&d),
+			reflect.ValueOf(&result), reflect.ValueOf(d),
 		})
 	} else {
 		err = fmt.Errorf("unable to infer template type '%s'", tt.String())
