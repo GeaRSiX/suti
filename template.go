@@ -170,9 +170,9 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	return
 }
 
-// ExecuteTemplate executes `t` against `d`. Reflection is used to determine
+// Execute executes `t` against `d`. Reflection is used to determine
 // the template type and call it's execution fuction.
-func (t *Template) ExecuteTemplate(d Data) (result bytes.Buffer, err error) {
+func (t *Template) Execute(d Data) (result bytes.Buffer, err error) {
 	tv := reflect.ValueOf(t.Template)
 	tt := reflect.TypeOf(t.Template)
 
