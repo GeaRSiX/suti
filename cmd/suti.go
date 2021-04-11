@@ -99,7 +99,7 @@ func main() {
 	template, err := suti.LoadTemplateFile(opts.RootPath, opts.PartialPaths...)
 	assert(err, "unable to load templates")
 
-	out, err := template.ExecuteTemplate(super)
+	out, err := template.Execute(super)
 	assert(err, "failed to execute template '%s'", opts.RootPath)
 	fmt.Print(out.String())
 

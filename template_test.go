@@ -132,7 +132,7 @@ func TestLoadTemplateFile(t *testing.T) {
 	}
 }
 
-func validateExecuteTemplate(t *testing.T, results string, expect string, e error) {
+func validateExecute(t *testing.T, results string, expect string, e error) {
 	if e != nil {
 		t.Error(e)
 	} else if results != expect {
@@ -140,7 +140,7 @@ func validateExecuteTemplate(t *testing.T, results string, expect string, e erro
 	}
 }
 
-func TestExecuteTemplate(t *testing.T) {
+func TestExecute(t *testing.T) {
 	var e error
 	var sd, gd, data Data
 	var d []Data
@@ -197,18 +197,18 @@ func TestExecuteTemplate(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	results, e = tmpl1.ExecuteTemplate(sd)
-	validateExecuteTemplate(t, results.String(), tmplResult, e)
-	results, e = tmpl2.ExecuteTemplate(sd)
-	validateExecuteTemplate(t, results.String(), tmplResult, e)
+	results, e = tmpl1.Execute(sd)
+	validateExecute(t, results.String(), tmplResult, e)
+	results, e = tmpl2.Execute(sd)
+	validateExecute(t, results.String(), tmplResult, e)
 
-	results, e = hmpl1.ExecuteTemplate(sd)
-	validateExecuteTemplate(t, results.String(), hmplResult, e)
-	results, e = hmpl2.ExecuteTemplate(sd)
-	validateExecuteTemplate(t, results.String(), tmplResult, e)
+	results, e = hmpl1.Execute(sd)
+	validateExecute(t, results.String(), hmplResult, e)
+	results, e = hmpl2.Execute(sd)
+	validateExecute(t, results.String(), tmplResult, e)
 
-	results, e = mst1.ExecuteTemplate(sd)
-	validateExecuteTemplate(t, results.String(), mstResult, e)
-	results, e = mst2.ExecuteTemplate(sd)
-	validateExecuteTemplate(t, results.String(), mstResult, e)
+	results, e = mst1.Execute(sd)
+	validateExecute(t, results.String(), mstResult, e)
+	results, e = mst2.Execute(sd)
+	validateExecute(t, results.String(), mstResult, e)
 }
