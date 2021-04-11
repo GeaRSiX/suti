@@ -99,7 +99,7 @@ func main() {
 	template, err := suti.LoadTemplateFile(opts.RootPath, opts.PartialPaths...)
 	assert(err, "unable to load templates")
 
-	out, err := suti.ExecuteTemplate(template, super)
+	out, err := template.ExecuteTemplate(super)
 	assert(err, "failed to execute template '%s'", opts.RootPath)
 	fmt.Print(out.String())
 
@@ -107,7 +107,7 @@ func main() {
 }
 
 func help() {
-	fmt.Println("Usage: suti [OPTIONS]\n")
+	fmt.Print("Usage: suti [OPTIONS]\n\n")
 
 	fmt.Print("Options")
 	fmt.Print(`
