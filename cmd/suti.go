@@ -19,13 +19,17 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+type Data map[string]interface{}
 
 type options struct {
 	RootPath        string
@@ -83,23 +87,39 @@ func init() {
 }
 
 func main() {
-	data, err := suti.LoadDataFiles("", opts.GlobalDataPaths...)
-	assert(err, "failed to load global data files")
-	global, conflicts := suti.MergeData(data...)
-	for _, key := range conflicts {
-		warn(nil, "merge conflict for global data key: '%s'", key)
+	var err error
+	var global Data
+	var data []Data
+	var template suti.Template
+	var out bytes.Buffer
+
+	opts.GlobalDataPaths = loadFilePaths(opts.GlobalDataPaths...)
+	for _, path := range opts.GlobalDataPaths {
+		var d Data
+		err = suti.LoadDataFile(path, &d)
+		assert(err, "failed to load global data '%s'", path)
+		data = append(data, d)
 	}
+	global = mergeData(data)
 
-	data, err = suti.LoadDataFiles(opts.SortData, opts.DataPaths...)
-	assert(err, "failed to load data files")
+	opts.DataPaths = loadFilePaths(opts.DataPaths...)
+	opts.DataPaths, err = suti.SortFileList(opts.DataPaths, opts.SortData)
+	if err != nil {
+		warn(err, "failed to sort data files")
+	}
+	data = make([]Data, 0)
+	for _, path := range opts.DataPaths {
+		var d Data
+		err = suti.LoadDataFile(path, &d)
+		assert(err, "failed to load data '%s'", path)
+		data = append(data, d)
+	}
+	global[opts.DataKey] = data
 
-	super, err := suti.GenerateSuperData(opts.DataKey, global, data)
-	assert(err, "failed to generate super data")
-
-	template, err := suti.LoadTemplateFile(opts.RootPath, opts.PartialPaths...)
+	template, err = suti.LoadTemplateFile(opts.RootPath, opts.PartialPaths...)
 	assert(err, "unable to load templates")
 
-	out, err := template.Execute(super)
+	out, err = template.Execute(global)
 	assert(err, "failed to execute template '%s'", opts.RootPath)
 	fmt.Print(out.String())
 
@@ -234,3 +254,45 @@ func setDefaultOptions(o options) options {
 	}
 	return o
 }
+
+// load glob & dir filepaths as individual filepaths
+func loadFilePaths(paths ...string) (filepaths []string) {
+	for _, path := range paths {
+		var err error
+		if strings.Contains(path, "*") {
+			var glob []string
+			glob, err = filepath.Glob(path)
+			assert(err, "failed to glob '%s'", path)
+			for _, p := range glob {
+				filepaths = append(filepaths, p)
+			}
+		} else {
+			err = filepath.Walk(path,
+				func(p string, info fs.FileInfo, e error) error {
+				if e == nil && !info.IsDir() {
+					filepaths = append(filepaths, p)
+				}
+				return e
+			})
+		}
+		if err != nil {
+			assert(err, "failed to load filepaths for '%s'", path)
+		}
+	}
+	return
+}
+
+func mergeData(data []Data) (merged Data) {
+	merged = make(Data)
+	for _, d := range data {
+		for key, val := range d {
+			if merged[key] == nil {
+				merged[key] = val
+			} else {
+				warn(nil, "merge conflict for global data key: '%s'", key)
+			}
+		}
+	}
+	return
+}
+
