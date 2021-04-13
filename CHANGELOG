@@ -1,8 +1,35 @@
 # CHANGELOG
 
-## v1.0.0
+## v0.2.0
+
+- massive refactored to data API:
+  - removed type Data, user will want to use their own data types
+  - LoadData() and LoadDataFile() now takes an interface{} (pointer) to write the result to
+  - removed LoadDataFiles(), bulk loading is now user responsibility
+  - removed GenerateSuperData() & MergeData(), these were superfluous fucntions
+- added file.go, which currently only has SortFileList() to stand-in for the missing data sort
+functionality found in LoadDataFiles()
+- refactored cmd/suti.go to work with the new API, no functional changes
+- ".mustache" is now accepted as a mustache file extension (as intended)
+- bugfixes
+
+## v0.1.1
+
+- updated everything to use the new (t *Template).Execute()
+
+## v0.1.0
+
+- type Template now a struct, the Template interface is accessed via (t *Template).Template
+- ExecuteTemplate -> (t *Template).Execute()
+- (t *Template).Execute() takes an interface{} param to execute against (not Data)
+- improved error messaging
+
+## v0.0.0
 
 first release!
 
-see git log, or README
+- fully doc'd in README & src comments
+- examples/
+- first iteration of suti API
+- cmd/suti.go
 
