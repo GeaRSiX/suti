@@ -142,8 +142,8 @@ func validateExecute(t *testing.T, results string, expect string, e error) {
 
 func TestExecute(t *testing.T) {
 	var e error
-	var sd, gd, data Data
-	var d []Data
+	var gd, data map[string]interface{}
+	var d []map[string]interface{}
 	var tmplr, tmplp, hmplr, hmplp, mstr, mstp string
 	var tmpl1, tmpl2, hmpl1, hmpl2, mst1, mst2 Template
 	var results bytes.Buffer
@@ -162,22 +162,19 @@ func TestExecute(t *testing.T) {
 	mstp = tdir + "/mstPartialGood.mst"
 	writeTestFile(t, mstp, mstPartialGood)
 
-	if data, e = LoadData("json", strings.NewReader(good["json"])); e != nil {
+	if e = LoadData("json", strings.NewReader(good["json"]), &gd); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	gd = data
-	if data, e = LoadData("yaml", strings.NewReader(good["yaml"])); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	d = append(d, data)
-	if data, e = LoadData("toml", strings.NewReader(good["toml"])); e != nil {
+	if e = LoadData("yaml", strings.NewReader(good["yaml"]), &data); e != nil {
 		t.Skip("setup failure:", e)
 	}
 	d = append(d, data)
+	if e = LoadData("toml", strings.NewReader(good["toml"]), &data); e != nil {
+		t.Skip("setup failure:", e)
+	}
+	d = append(d, data)
+	gd["data"] = d
 
-	if sd, e = GenerateSuperData("", gd, d); e != nil {
-		t.Skip("setup failure:", e)
-	}
 	if tmpl1, e = LoadTemplateFile(tmplr, tmplp); e != nil {
 		t.Skip("setup failure:", e)
 	}
@@ -197,18 +194,18 @@ func TestExecute(t *testing.T) {
 		t.Skip("setup failure:", e)
 	}
 
-	results, e = tmpl1.Execute(sd)
+	results, e = tmpl1.Execute(gd)
 	validateExecute(t, results.String(), tmplResult, e)
-	results, e = tmpl2.Execute(sd)
+	results, e = tmpl2.Execute(gd)
 	validateExecute(t, results.String(), tmplResult, e)
 
-	results, e = hmpl1.Execute(sd)
+	results, e = hmpl1.Execute(gd)
 	validateExecute(t, results.String(), hmplResult, e)
-	results, e = hmpl2.Execute(sd)
+	results, e = hmpl2.Execute(gd)
 	validateExecute(t, results.String(), tmplResult, e)
 
-	results, e = mst1.Execute(sd)
+	results, e = mst1.Execute(gd)
 	validateExecute(t, results.String(), mstResult, e)
-	results, e = mst2.Execute(sd)
+	results, e = mst2.Execute(gd)
 	validateExecute(t, results.String(), mstResult, e)
 }
