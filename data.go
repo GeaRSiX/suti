@@ -61,7 +61,7 @@ func LoadDataFile(path string, outp interface{}) error {
 	if e == nil {
 		lang := filepath.Ext(path)[1:] // don't include '.'
 		if e = LoadData(lang, f, outp); e != nil {
-			e = fmt.Errorf("failed to load data '%s':", e.Error())
+			e = fmt.Errorf("failed to load data '%s': %s", e.Error())
 		}
 	}
 

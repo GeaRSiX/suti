@@ -21,7 +21,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
 	"io/fs"
 	"notabug.org/gearsix/suti"
 	"os"
@@ -29,6 +28,7 @@ import (
 	"strings"
 )
 
+// Data is just a generic map for key/value data
 type Data map[string]interface{}
 
 type options struct {
@@ -227,7 +227,6 @@ func parseConfig(fpath string, existing options) options {
 	var cfgf *os.File
 	if cfgf, err = os.Open(fpath); err != nil {
 		warn(err, "error loading config file '%s'", fpath)
-		err = io.EOF
 	}
 	defer cfgf.Close()
 

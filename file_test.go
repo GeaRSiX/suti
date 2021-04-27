@@ -12,7 +12,7 @@ func TestSortFileList(t *testing.T) {
 	var err error
 	tdir := t.TempDir()
 	paths := []string{tdir + "/1", tdir + "/3", tdir + "/2"}
-	sorted := make([]string, 0, len(paths))
+	var sorted []string
 
 	sorted, err = SortFileList(paths, "filename")
 	if err != nil {
