@@ -19,10 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"time"
-	"os"
 )
 
 // SortFileList sorts `filepath` (a list of filepaths) in `order`. `order`
@@ -49,7 +49,7 @@ func SortFileList(paths []string, order string) (sorted []string, err error) {
 	return
 }
 
-func sortFileListByName(direction string, paths[]string) []string {
+func sortFileListByName(direction string, paths []string) []string {
 	if direction == "desc" {
 		sort.Slice(paths, func(i, j int) bool {
 			return filepath.Base(paths[i]) > filepath.Base(paths[j])

@@ -67,4 +67,3 @@ func LoadDataFile(path string, outp interface{}) error {
 
 	return e
 }
-

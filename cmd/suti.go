@@ -269,11 +269,11 @@ func loadFilePaths(paths ...string) (filepaths []string) {
 		} else {
 			err = filepath.Walk(path,
 				func(p string, info fs.FileInfo, e error) error {
-				if e == nil && !info.IsDir() {
-					filepaths = append(filepaths, p)
-				}
-				return e
-			})
+					if e == nil && !info.IsDir() {
+						filepaths = append(filepaths, p)
+					}
+					return e
+				})
 		}
 		if err != nil {
 			assert(err, "failed to load filepaths for '%s'", path)
@@ -295,4 +295,3 @@ func mergeData(data []Data) (merged Data) {
 	}
 	return
 }
-

@@ -1,17 +1,17 @@
 package suti
 
 import (
-	"testing"
-	"strconv"
 	"os"
-	"time"
 	"path/filepath"
+	"strconv"
+	"testing"
+	"time"
 )
 
 func TestSortFileList(t *testing.T) {
 	var err error
 	tdir := t.TempDir()
-	paths := []string{tdir+"/1", tdir+"/3", tdir+"/2"}
+	paths := []string{tdir + "/1", tdir + "/3", tdir + "/2"}
 	sorted := make([]string, 0, len(paths))
 
 	sorted, err = SortFileList(paths, "filename")
@@ -49,7 +49,7 @@ func TestSortFileList(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for i, _ := range paths {
+	for i := range paths {
 		if sorted[i] != paths[i] {
 			t.Errorf("invalid order returned %s - %s", sorted, paths)
 		}
