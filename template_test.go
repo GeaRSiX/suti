@@ -55,7 +55,7 @@ func validateTemplateFile(t *testing.T, template Template, root string, partials
 
 	ttype := getTemplateType(root)
 	if reflect.TypeOf(template.Template).String() != types[ttype] {
-		t.Error("invalid template loaded")
+		t.Fatal("invalid template loaded")
 	}
 
 	if types[ttype] == "*template.Template" {
@@ -66,14 +66,14 @@ func validateTemplateFile(t *testing.T, template Template, root string, partials
 				reflect.ValueOf(p),
 			})
 			if rv[0].IsNil() {
-				t.Errorf("missing defined template '%s'", p)
+				t.Fatalf("missing defined template '%s'", p)
 				rv = reflect.ValueOf(template.Template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
 				t.Log(rv)
 			}
 		}
 		rv = reflect.ValueOf(template.Template).MethodByName("Name").Call([]reflect.Value{})
 		if rv[0].String() != filepath.Base(root) {
-			t.Errorf("invalid template name: %s does not match %s",
+			t.Fatalf("invalid template name: %s does not match %s",
 				rv[0].String(), filepath.Base(root))
 		}
 	}
@@ -115,28 +115,28 @@ func TestLoadTemplateFile(t *testing.T) {
 
 	for g, root := range gr { // good root, good partials
 		if template, e := LoadTemplateFile(root, gp[g]); e != nil {
-			t.Error(e)
+			t.Fatal(e)
 		} else {
 			validateTemplateFile(t, template, root, gp[g])
 		}
 	}
 	for _, root := range br { // bad root, good partials
 		if _, e := LoadTemplateFile(root, gp...); e == nil {
-			t.Errorf("no error for bad template with good partials\n")
+			t.Fatalf("no error for bad template with good partials\n")
 		}
 	}
 	for _, root := range br { // bad root, bad partials
 		if _, e := LoadTemplateFile(root, bp...); e == nil {
-			t.Errorf("no error for bad template with bad partials\n")
+			t.Fatalf("no error for bad template with bad partials\n")
 		}
 	}
 }
 
 func validateExecute(t *testing.T, results string, expect string, e error) {
 	if e != nil {
-		t.Error(e)
+		t.Fatal(e)
 	} else if results != expect {
-		t.Errorf("invalid results: '%s' should match '%s'", results, expect)
+		t.Fatalf("invalid results: '%s' should match '%s'", results, expect)
 	}
 }
 

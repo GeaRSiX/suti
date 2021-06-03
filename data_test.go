@@ -54,7 +54,7 @@ func validateData(t *testing.T, d interface{}, e error, lang string) {
 	var b []byte
 
 	if e != nil {
-		t.Error(e)
+		t.Fatal(e)
 	}
 
 	switch lang {
@@ -70,7 +70,7 @@ func validateData(t *testing.T, d interface{}, e error, lang string) {
 		t.Error(e)
 	}
 	if string(b) != good[lang] {
-		t.Errorf("incorrect %s: %s does not match %s", lang, b, good[lang])
+		t.Fatalf("incorrect %s: %s does not match %s", lang, b, good[lang])
 	}
 }
 
@@ -84,13 +84,13 @@ func TestLoadData(t *testing.T) {
 	}
 
 	if e = LoadData("json", strings.NewReader(badData), &d); e == nil {
-		t.Errorf("bad data passed")
+		t.Fatalf("bad data passed")
 	}
 	if e = LoadData("toml", strings.NewReader(""), &d); e != nil {
-		t.Errorf("empty data failed %s, %s", d, e)
+		t.Fatalf("empty data failed %s, %s", d, e)
 	}
 	if e = LoadData("void", strings.NewReader("shouldn't pass"), &d); e == nil {
-		t.Errorf("invalid data language passed: %s, %s", d, e)
+		t.Fatalf("invalid data language passed: %s, %s", d, e)
 	}
 
 	return
@@ -113,18 +113,18 @@ func TestLoadDataFile(t *testing.T) {
 	writeTestFile(t, p, badData)
 	e = LoadDataFile(p, &d)
 	if e == nil {
-		t.Errorf("bad data passed")
+		t.Fatalf("bad data passed")
 	}
 
 	p = tdir + "/empty.json"
 	writeTestFile(t, p, "")
 	e = LoadDataFile(p, &d)
 	if e != nil {
-		t.Errorf("empty file failed: %s", e)
+		t.Fatalf("empty file failed: %s", e)
 	}
 
 	if e = LoadDataFile("non-existing-file.toml", &d); e == nil {
-		t.Errorf("non-existing file passed: %s, %s", d, e)
+		t.Fatalf("non-existing file passed: %s, %s", d, e)
 	}
 
 	return

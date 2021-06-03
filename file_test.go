@@ -16,22 +16,22 @@ func TestSortFileList(t *testing.T) {
 
 	sorted, err = SortFileList(paths, "filename")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	for i, p := range sorted {
 		if filepath.Base(p) != strconv.Itoa(i+1) {
-			t.Errorf("invalid order returned sorted[%d] is %s", i, p)
+			t.Fatalf("invalid order returned sorted[%d] is %s", i, p)
 		}
 	}
 
 	sorted, err = SortFileList(paths, "filename-desc")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	j := 3
 	for i := 0; i < len(sorted); i++ {
 		if filepath.Base(sorted[i]) != strconv.Itoa(j) {
-			t.Errorf("invalid order returned sorted[%d] is %s", i, sorted[i])
+			t.Fatalf("invalid order returned sorted[%d] is %s", i, sorted[i])
 		}
 		j--
 	}
@@ -47,22 +47,22 @@ func TestSortFileList(t *testing.T) {
 
 	sorted, err = SortFileList(paths, "modified")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	for i := range paths {
 		if sorted[i] != paths[i] {
-			t.Errorf("invalid order returned %s - %s", sorted, paths)
+			t.Fataf("invalid order returned %s - %s", sorted, paths)
 		}
 	}
 
 	sorted, err = SortFileList(paths, "modified-desc")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	j = 2
 	for i := 0; i < len(paths); i++ {
 		if sorted[i] != paths[j] {
-			t.Errorf("invalid order returned %s - %s", sorted, paths)
+			t.Fatalf("invalid order returned %s - %s", sorted, paths)
 		}
 		j--
 	}
