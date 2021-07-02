@@ -30,13 +30,39 @@ import (
 	tmpl "text/template"
 )
 
-// Template is a generic interface container for any template type
+func getTemplateType(path string) string {
+	return strings.TrimPrefix(filepath.Ext(path), ".")
+}
+
+// Template is a generic interface to any template parsed from LoadTemplateFile
 type Template struct {
 	Template interface{}
 }
 
-func getTemplateType(path string) string {
-	return strings.TrimPrefix(filepath.Ext(path), ".")
+// Execute executes `t` against `d`. Reflection is used to determine
+// the template type and call it's execution fuction.
+func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
+	var funcName string
+	var params []reflect.Value
+	switch (reflect.TypeOf(t.Template).String()) {
+	case "*template.Template": // golang templates
+		funcName = "Execute"
+		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(d)}
+	case "*mustache.Template":
+		funcName = "FRender"
+		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(d)}
+	default:
+		err = fmt.Errorf("unable to infer template type '%s'", reflect.TypeOf(t.Template).String())
+	}
+
+	if err == nil {
+		rval := reflect.ValueOf(t.Template).MethodByName(funcName).Call(params)
+		if !rval[0].IsNil() { // err != nil
+			err = rval[0].Interface().(error)
+		}
+	}
+
+	return
 }
 
 func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, error) {
@@ -170,28 +196,3 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	return
 }
 
-// Execute executes `t` against `d`. Reflection is used to determine
-// the template type and call it's execution fuction.
-func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
-	tv := reflect.ValueOf(t.Template)
-	tt := reflect.TypeOf(t.Template)
-
-	var rval []reflect.Value
-	if tt.String() == "*template.Template" { // tmpl or hmpl
-		rval = tv.MethodByName("Execute").Call([]reflect.Value{
-			reflect.ValueOf(&result), reflect.ValueOf(d),
-		})
-	} else if tt.String() == "*mustache.Template" { // mustache
-		rval = tv.MethodByName("FRender").Call([]reflect.Value{
-			reflect.ValueOf(&result), reflect.ValueOf(d),
-		})
-	} else {
-		err = fmt.Errorf("unable to infer template type '%s'", tt.String())
-	}
-
-	if rval[0].IsNil() == false { // rval[0] = err
-		err = rval[0].Interface().(error)
-	}
-
-	return
-}
