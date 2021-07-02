@@ -51,7 +51,7 @@ func TestSortFileList(t *testing.T) {
 	}
 	for i := range paths {
 		if sorted[i] != paths[i] {
-			t.Fataf("invalid order returned %s - %s", sorted, paths)
+			t.Fatalf("invalid order returned %s - %s", sorted, paths)
 		}
 	}
 
