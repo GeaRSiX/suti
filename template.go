@@ -36,6 +36,7 @@ func getTemplateType(path string) string {
 
 // Template is a generic interface to any template parsed from LoadTemplateFile
 type Template struct {
+	Source   string
 	Template interface{}
 }
 
@@ -180,7 +181,7 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	}
 
 	if e == nil {
-		t = Template{}
+		t = Template{Source: root}
 		ttype := getTemplateType(root)
 		if ttype == "tmpl" || ttype == "gotmpl" {
 			t.Template, e = loadTemplateFileTmpl(root, partials...)
