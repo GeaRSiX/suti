@@ -28,6 +28,24 @@ import (
 	"path/filepath"
 )
 
+// SupportedDataLangs provides a list of supported languages for data files (lower-case)
+var SupportedDataLangs = []string{"json", "yaml", "toml"}
+
+// IsSupportedDataLang provides the index of `SupportedLangs` that `lang` is at.
+// If `lang` is not in `SupportedDataLangs`, `-1` will be returned.
+// File extensions can be passed in `lang`, the prefixed `.` will be trimmed.
+func IsSupportedDataLang(lang string) int {
+	if lang[0] == '.' {
+		lang = lang[1:]
+	}
+	for i, l := range SupportedDataLangs {
+		if lang == l {
+			return i
+		}
+	}
+	return -1
+}
+
 // LoadData attempts to load all data from `in` as the data language `lang`
 // and writes the result in the pointer `outp`.
 func LoadData(lang string, in io.Reader, outp interface{}) error {
@@ -38,13 +56,15 @@ func LoadData(lang string, in io.Reader, outp interface{}) error {
 		return nil
 	}
 
-	if lang == "json" {
+	switch IsSupportedDataLang(lang) {
+	case 0:
 		e = json.Unmarshal(inbuf, outp)
-	} else if lang == "yaml" {
+	case 1:
 		e = yaml.Unmarshal(inbuf, outp)
-	} else if lang == "toml" {
+	case 2:
 		e = toml.Unmarshal(inbuf, outp)
-	} else {
+	case -1:
+	default:
 		e = fmt.Errorf("'%s' is not a supported data language", lang)
 	}
 
