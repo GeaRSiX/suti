@@ -26,6 +26,36 @@ import (
 	"testing"
 )
 
+func TestIsSupportedDataLang(t *testing.T) {
+	exts := []string{
+		".json", "json", "JSON", ".JSON",
+		".yaml", "yaml", "YAML", ".YAML",
+		".toml", "toml", "TOML", ".TOML",
+		".misc", "misc", "MISC", ".MISC",
+	}
+
+	for i, ext := range exts {
+		var target int
+		if i < 4 {
+			target = 0
+		} else if i < 8 {
+			target = 1
+		} else if i < 12 {
+			target = 2
+		} else {
+			target = -1
+		}
+
+		if IsSupportedDataLang(ext) != target {
+			if target == -1 {
+				t.Fatalf("%s is not a supported data language", ext)
+			} else {
+				t.Fatalf("%s did not return %s", ext, SupportedDataLangs[target])
+			}
+		}
+	}
+}
+
 var good = map[string]string{
 	"json": `{"eg":0}`,
 	"yaml": `eg: 0
@@ -90,7 +120,7 @@ func TestLoadData(t *testing.T) {
 		t.Fatalf("empty data failed %s, %s", d, e)
 	}
 	if e = LoadData("void", strings.NewReader("shouldn't pass"), &d); e == nil {
-		t.Fatalf("invalid data language passed: %s, %s", d, e)
+		t.Fatalf("invalid data language passed")
 	}
 
 	return

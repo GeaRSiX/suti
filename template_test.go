@@ -25,6 +25,36 @@ import (
 	"testing"
 )
 
+func TestIsSupportedTemplateLang(t *testing.T) {
+	exts := []string{
+		".tmpl", "tmpl", "TMPL", ".TMPL",
+		".hmpl", "hmpl", "HMPL", ".HMPL",
+		".mst", "mst", "MST", ".MST",
+		".NONE", "none", "NONE", ".NONE",
+	}
+
+	for i, ext := range exts {
+		var target int
+		if i < 4 {
+			target = 0
+		} else if i < 8 {
+			target = 1
+		} else if i < 12 {
+			target = 2
+		} else {
+			target = -1
+		}
+
+		if IsSupportedTemplateLang(ext) != target {
+			if target == -1 {
+				t.Fatalf("%s is not a supported data language", ext)
+			} else {
+				t.Fatalf("%s did not return %s", ext, SupportedTemplateLangs[target])
+			}
+		}
+	}
+}
+
 const tmplRootGood = "{{.eg}} {{ template \"tmplPartialGood.tmpl\" . }}"
 const tmplPartialGood = "{{range .data}}{{.eg}}{{end}}"
 const tmplResult = "0 00"
