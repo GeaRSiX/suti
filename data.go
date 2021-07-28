@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // SupportedDataLangs provides a list of supported languages for data files (lower-case)
@@ -35,7 +36,8 @@ var SupportedDataLangs = []string{"json", "yaml", "toml"}
 // If `lang` is not in `SupportedDataLangs`, `-1` will be returned.
 // File extensions can be passed in `lang`, the prefixed `.` will be trimmed.
 func IsSupportedDataLang(lang string) int {
-	if lang[0] == '.' {
+	lang = strings.ToLower(lang)
+	if len(lang) > 0 && lang[0] == '.' {
 		lang = lang[1:]
 	}
 	for i, l := range SupportedDataLangs {
@@ -64,6 +66,7 @@ func LoadData(lang string, in io.Reader, outp interface{}) error {
 	case 2:
 		e = toml.Unmarshal(inbuf, outp)
 	case -1:
+		fallthrough
 	default:
 		e = fmt.Errorf("'%s' is not a supported data language", lang)
 	}

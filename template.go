@@ -37,7 +37,8 @@ var SupportedTemplateLangs = []string{"tmpl", "hmpl", "mst"}
 // If `lang` is not in `SupportedTemplateLangs`, `-1` will be returned.
 // File extensions can be passed in `lang`, the prefixed `.` will be trimmed.
 func IsSupportedTemplateLang(lang string) int {
-	if lang[0] == '.' {
+	lang = strings.ToLower(lang)
+	if len(lang) > 0 && lang[0] == '.' {
 		lang = lang[1:]
 	}
 	for i, l := range SupportedTemplateLangs {
