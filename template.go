@@ -30,6 +30,24 @@ import (
 	tmpl "text/template"
 )
 
+// SupportedTemplateLangs provides a list of supported languages for template files (lower-case)
+var SupportedTemplateLangs = []string{"tmpl", "hmpl", "mst"}
+
+// IsSupportedTemplateLang provides the index of `SupportedTemplateLangs` that `lang` is at.
+// If `lang` is not in `SupportedTemplateLangs`, `-1` will be returned.
+// File extensions can be passed in `lang`, the prefixed `.` will be trimmed.
+func IsSupportedTemplateLang(lang string) int {
+	if lang[0] == '.' {
+		lang = lang[1:]
+	}
+	for i, l := range SupportedTemplateLangs {
+		if lang == l {
+			return i
+		}
+	}
+	return -1
+}
+
 func getTemplateType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
