@@ -85,7 +85,8 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	return
 }
 
-func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, error) {
+// TODO
+func LoadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, error) {
 	var stat os.FileInfo
 	t, e := tmpl.ParseFiles(root)
 
@@ -118,7 +119,8 @@ func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, erro
 	return t, e
 }
 
-func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, error) {
+// TODO
+func LoadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, error) {
 	var stat os.FileInfo
 	t, e := hmpl.ParseFiles(root)
 
@@ -151,7 +153,8 @@ func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, erro
 	return t, e
 }
 
-func loadTemplateFileMst(root string, partials ...string) (*mst.Template, error) {
+// TODO
+func LoadTemplateFileMst(root string, partials ...string) (*mst.Template, error) {
 	var err error
 	for p, partial := range partials {
 		if err != nil {
@@ -203,11 +206,11 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 		t = Template{Source: root}
 		ttype := getTemplateType(root)
 		if ttype == "tmpl" || ttype == "gotmpl" {
-			t.Template, e = loadTemplateFileTmpl(root, partials...)
+			t.Template, e = LoadTemplateFileTmpl(root, partials...)
 		} else if ttype == "hmpl" || ttype == "gohmpl" {
-			t.Template, e = loadTemplateFileHmpl(root, partials...)
+			t.Template, e = LoadTemplateFileHmpl(root, partials...)
 		} else if ttype == "mst" || ttype == "mustache" {
-			t.Template, e = loadTemplateFileMst(root, partials...)
+			t.Template, e = LoadTemplateFileMst(root, partials...)
 		} else {
 			e = fmt.Errorf("'%s' is not a supported template language", ttype)
 		}
