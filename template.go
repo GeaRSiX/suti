@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	tmpl "text/template"
 )
@@ -110,7 +111,7 @@ func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, erro
 					return err
 				})
 			} else {
-				return nil, fmt.Errorf("non-matching filetype")
+				return nil, fmt.Errorf("non-matching filetype (%s)", p)
 			}
 		}
 	}
@@ -143,7 +144,7 @@ func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, erro
 					return err
 				})
 			} else {
-				return nil, fmt.Errorf("non-matching filetype")
+				return nil, fmt.Errorf("non-matching filetype (%s)", p)
 			}
 		}
 	}
@@ -211,6 +212,28 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 		} else {
 			e = fmt.Errorf("'%s' is not a supported template language", ttype)
 		}
+	}
+
+	return
+}
+
+// LoadTemplateStringTmpl
+func LoadTemplateStringTmpl(name string, root string, partials ...string) (t Template, e error) {
+	if len(root) == 0 {
+		e = fmt.Errorf("no root template specified")
+	}
+	if len(name) == 0 {
+		name = "template"
+	}
+
+	if e == nil {
+		template := tmpl.Must(tmpl.New(name).Parse(root))
+		for i, p := range partials {
+			if template, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
+				break
+			}
+		}
+		t.Template = template
 	}
 
 	return
