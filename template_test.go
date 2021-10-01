@@ -25,6 +25,24 @@ import (
 	"testing"
 )
 
+const tmplRootGood = "{{.eg}} {{ template \"tmplPartialGood.tmpl\" . }}"
+const tmplPartialGood = "{{range .data}}{{.eg}}{{end}}"
+const tmplResult = "0 00"
+const tmplRootBad = "{{ example }}} {{{ template \"tmplPartialBad.tmpl\" . }}"
+const tmplPartialBad = "{{{ .example }}"
+
+const hmplRootGood = "<!DOCTYPE html><html><p>{{.eg}} {{ template \"hmplPartialGood.hmpl\" . }}</p></html>"
+const hmplPartialGood = "<b>{{range .data}}{{.eg}}{{end}}</b>"
+const hmplResult = "<!DOCTYPE html><html><p>0 <b>00</b></p></html>"
+const hmplRootBad = "{{ example }} {{{ template \"hmplPartialBad.hmpl\" . }}"
+const hmplPartialBad = "<b>{{{ .example2 }}</b>"
+
+const mstRootGood = "{{eg}} {{> mstPartialGood}}"
+const mstPartialGood = "{{#data}}{{eg}}{{/data}}"
+const mstResult = "0 00"
+const mstRootBad = "{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}"
+const mstPartialBad = "p{{$}{{ > noexist}}"
+
 func TestIsSupportedTemplateLang(t *testing.T) {
 	exts := []string{
 		".tmpl", "tmpl", "TMPL", ".TMPL",
@@ -55,24 +73,6 @@ func TestIsSupportedTemplateLang(t *testing.T) {
 	}
 }
 
-const tmplRootGood = "{{.eg}} {{ template \"tmplPartialGood.tmpl\" . }}"
-const tmplPartialGood = "{{range .data}}{{.eg}}{{end}}"
-const tmplResult = "0 00"
-const tmplRootBad = "{{ example }}} {{{ template \"tmplPartialBad.tmpl\" . }}"
-const tmplPartialBad = "{{{ .example }}"
-
-const hmplRootGood = "<!DOCTYPE html><html><p>{{.eg}} {{ template \"hmplPartialGood.hmpl\" . }}</p></html>"
-const hmplPartialGood = "<b>{{range .data}}{{.eg}}{{end}}</b>"
-const hmplResult = "<!DOCTYPE html><html><p>0 <b>00</b></p></html>"
-const hmplRootBad = "{{ example }} {{{ template \"hmplPartialBad.hmpl\" . }}"
-const hmplPartialBad = "<b>{{{ .example2 }}</b>"
-
-const mstRootGood = "{{eg}} {{> mstPartialGood}}"
-const mstPartialGood = "{{#data}}{{eg}}{{/data}}"
-const mstResult = "0 00"
-const mstRootBad = "{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}"
-const mstPartialBad = "p{{$}{{ > noexist}}"
-
 func validateTemplate(t *testing.T, template Template, templateType string, rootName string, partialNames ...string) {
 	types := map[string]string{
 		"tmpl":     "*template.Template",
@@ -83,8 +83,9 @@ func validateTemplate(t *testing.T, template Template, templateType string, root
 		"mustache": "*mustache.Template",
 	}
 
-	if reflect.TypeOf(template.Template).String() != types[templateType] {
-		t.Fatal("invalid template loaded")
+	rt := reflect.TypeOf(template.Template).String()
+	if rt != types[templateType] {
+		t.Fatalf("invalid template type '%s' loaded, should be '%s'", rt, types[templateType])
 	}
 
 	if types[templateType] == "*template.Template" {
@@ -193,15 +194,46 @@ func TestLoadTemplateFile(t *testing.T) {
 	}
 }
 
-func TestLoadTemplateStringTmpl(t *testing.T) {
-       t.Parallel()
+func TestLoadTemplateString(t *testing.T) {
+	var gr, gp, br, bp []string
 
-       name := "tmplGood"
-       tmpl, err := LoadTemplateStringTmpl(name, tmplRootGood, tmplPartialGood)
-       if err != nil {
-               t.Fatal(err)
-       }
-       validateTemplate(t, tmpl, "tmpl", name, name + "-partial0")
+	gr = append(gr, tmplRootGood)
+	gp = append(gp, tmplPartialGood)
+	br = append(br, tmplRootBad)
+	bp = append(bp, tmplPartialBad)
+
+	gr = append(gr, hmplRootGood)
+	gp = append(gp, hmplPartialGood)
+	br = append(br, hmplRootBad)
+	bp = append(bp, hmplPartialBad)
+
+	gr = append(gr, mstRootGood)
+	gp = append(gp, mstPartialGood)
+	br = append(br, mstRootBad)
+	bp = append(bp, mstPartialBad)
+
+	name := "test"
+	var ttype string
+	for g, root := range gr { // good root, good partials
+		ttype = SupportedTemplateLangs[g]
+		if template, e := LoadTemplateString(ttype, name, root, gp[g]); e != nil {
+			t.Fatalf("'%s' template failed to load: %s", ttype, e)
+		} else {
+			validateTemplate(t, template, ttype, name, name + "-partial0")
+		}
+	}
+	for b, root := range br { // bad root, good partials
+		ttype = SupportedTemplateLangs[b]
+		if _, e := LoadTemplateString(ttype, name, root, gp...); e == nil {
+			t.Fatalf("no error for bad template with good partials\n")
+		}
+	}
+	for b, root := range br { // bad root, bad partials
+		ttype = SupportedTemplateLangs[b]
+		if _, e := LoadTemplateString(ttype, name, root, bp...); e == nil {
+			t.Fatalf("no error for bad template with bad partials\n")
+		}
+	}
 }
 
 func validateExecute(t *testing.T, results string, expect string, e error) {

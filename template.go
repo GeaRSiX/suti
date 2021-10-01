@@ -193,47 +193,85 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
 		e = fmt.Errorf("no root template specified")
 	}
-
 	if stat, err := os.Stat(root); err != nil {
 		e = err
 	} else if stat.IsDir() {
 		e = fmt.Errorf("root path must be a file, not a directory: %s", root)
 	}
 
-	if e == nil {
-		t = Template{Source: root}
-		ttype := getTemplateType(root)
-		if ttype == "tmpl" || ttype == "gotmpl" {
-			t.Template, e = loadTemplateFileTmpl(root, partials...)
-		} else if ttype == "hmpl" || ttype == "gohmpl" {
-			t.Template, e = loadTemplateFileHmpl(root, partials...)
-		} else if ttype == "mst" || ttype == "mustache" {
-			t.Template, e = loadTemplateFileMst(root, partials...)
-		} else {
-			e = fmt.Errorf("'%s' is not a supported template language", ttype)
-		}
+	if e != nil {
+		return
+	}
+
+	t = Template{Source: root}
+	ttype := getTemplateType(root)
+	if ttype == "tmpl" || ttype == "gotmpl" {
+		t.Template, e = loadTemplateFileTmpl(root, partials...)
+	} else if ttype == "hmpl" || ttype == "gohmpl" {
+		t.Template, e = loadTemplateFileHmpl(root, partials...)
+	} else if ttype == "mst" || ttype == "mustache" {
+		t.Template, e = loadTemplateFileMst(root, partials...)
+	} else {
+		e = fmt.Errorf("'%s' is not a supported template language", ttype)
 	}
 
 	return
 }
 
-// LoadTemplateStringTmpl
-func LoadTemplateStringTmpl(name string, root string, partials ...string) (t Template, e error) {
+// LoadTemplateString loads a Template from string `root` of type `ttype`, named `name`.
+// `ttype` must be an element in `SupportedTemplateLangs`.
+// `name` is optional, if empty the template name will be "template".
+// `root` should be a string of template, with syntax matching that of `ttype`.
+// `partials` should be a string of template, with syntax matching that of `ttype`.
+func LoadTemplateString(ttype string, name string, root string, partials ...string) (t Template, e error) {
 	if len(root) == 0 {
-		e = fmt.Errorf("no root template specified")
+		e = fmt.Errorf("no root template")
 	}
+	if IsSupportedTemplateLang(ttype) == -1 {
+		e = fmt.Errorf("invalid type '%s'", ttype)
+	}
+	if e != nil {
+		return
+	}
+
 	if len(name) == 0 {
 		name = "template"
 	}
 
-	if e == nil {
-		template := tmpl.Must(tmpl.New(name).Parse(root))
+	switch(ttype) {
+	case "tmpl":
+		var template *tmpl.Template
+		if template, e = tmpl.New(name).Parse(root); e != nil {
+			break
+		}
 		for i, p := range partials {
 			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
 				break
 			}
 		}
 		t.Template = template
+	case "hmpl":
+		var template *hmpl.Template
+		if template, e = hmpl.New(name).Parse(root); e != nil {
+			break
+		}
+		for i, p := range partials {
+			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
+				break
+			}
+		}
+		t.Template = template
+	case "mst":
+		var template *mst.Template
+		mstpp := new(mst.StaticProvider)
+		mstpp.Partials = make(map[string]string)
+		for p, partial := range partials {
+			mstpp.Partials[name+"-partial"+strconv.Itoa(p)] = partial
+		}
+		template, e = mst.ParseStringPartials(root, mstpp)
+		t.Template = template
+	default:
+		e = fmt.Errorf("'%s' is not a supported template language", ttype)
 	}
 
 	return
