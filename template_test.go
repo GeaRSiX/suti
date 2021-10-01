@@ -73,6 +73,37 @@ const mstResult = "0 00"
 const mstRootBad = "{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}"
 const mstPartialBad = "p{{$}{{ > noexist}}"
 
+func validateTemplate(t *testing.T, template Template, templateType string, rootName string, partialNames ...string) {
+	types := map[string]string{
+		"tmpl":     "*template.Template",
+		"gotmpl":   "*template.Template",
+		"hmpl":     "*template.Template",
+		"gohmpl":   "*template.Template",
+		"mst":      "*mustache.Template",
+		"mustache": "*mustache.Template",
+	}
+
+	if reflect.TypeOf(template.Template).String() != types[templateType] {
+		t.Fatal("invalid template loaded")
+	}
+
+	if types[templateType] == "*template.Template" {
+		var rv []reflect.Value
+		for _, p := range partialNames {
+			rv := reflect.ValueOf(template.Template).MethodByName("Lookup").Call([]reflect.Value{reflect.ValueOf(p)})
+			if rv[0].IsNil() {
+				t.Fatalf("missing defined template '%s'", p)
+				rv = reflect.ValueOf(template.Template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
+				t.Log(rv)
+			}
+		}
+		rv = reflect.ValueOf(template.Template).MethodByName("Name").Call([]reflect.Value{})
+		if rv[0].String() != rootName {
+			t.Fatalf("invalid template name: %s does not match %s", rv[0].String(), rootName)
+		}
+	}
+}
+
 func validateTemplateFile(t *testing.T, template Template, root string, partials ...string) {
 	types := map[string]string{
 		"tmpl":     "*template.Template",
@@ -160,6 +191,17 @@ func TestLoadTemplateFile(t *testing.T) {
 			t.Fatalf("no error for bad template with bad partials\n")
 		}
 	}
+}
+
+func TestLoadTemplateStringTmpl(t *testing.T) {
+       t.Parallel()
+
+       name := "tmplGood"
+       tmpl, err := LoadTemplateStringTmpl(name, tmplRootGood, tmplPartialGood)
+       if err != nil {
+               t.Fatal(err)
+       }
+       validateTemplate(t, tmpl, "tmpl", name, name + "-partial0")
 }
 
 func validateExecute(t *testing.T, results string, expect string, e error) {

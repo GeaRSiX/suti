@@ -229,7 +229,7 @@ func LoadTemplateStringTmpl(name string, root string, partials ...string) (t Tem
 	if e == nil {
 		template := tmpl.Must(tmpl.New(name).Parse(root))
 		for i, p := range partials {
-			if template, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
+			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
 				break
 			}
 		}
