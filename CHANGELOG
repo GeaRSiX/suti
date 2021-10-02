@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v0.3.0
+
+- added LoadTemplate, loads templates from io.Reader params, template language and name must be specified.
+This function is the template.go counterpart to data.go#LoadData
+- added LoadTemplateStrings loads templates from string params (calls LoadTemplate)
+
+## v0.2.2
+
+- added .Source to suti.Template, contains the filepath of the source file for the template
+- More tidyup
+
+## v0.2.1
+
+- Tidyup work
+
 ## v0.2.0
 
 - massive refactored to data API:

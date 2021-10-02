@@ -141,7 +141,7 @@ func validateTemplateFile(t *testing.T, template Template, root string, partials
 	}
 }
 
-func TestLoadTemplateFile(t *testing.T) {
+func TestLoadTemplateFilepath(t *testing.T) {
 	var gr, gp, br, bp []string
 	tdir := t.TempDir()
 	i := 0
@@ -176,19 +176,19 @@ func TestLoadTemplateFile(t *testing.T) {
 	writeTestFile(t, bp[i], mstPartialBad)
 
 	for g, root := range gr { // good root, good partials
-		if template, e := LoadTemplateFile(root, gp[g]); e != nil {
+		if template, e := LoadTemplateFilepath(root, gp[g]); e != nil {
 			t.Fatal(e)
 		} else {
 			validateTemplateFile(t, template, root, gp[g])
 		}
 	}
 	for _, root := range br { // bad root, good partials
-		if _, e := LoadTemplateFile(root, gp...); e == nil {
+		if _, e := LoadTemplateFilepath(root, gp...); e == nil {
 			t.Fatalf("no error for bad template with good partials\n")
 		}
 	}
 	for _, root := range br { // bad root, bad partials
-		if _, e := LoadTemplateFile(root, bp...); e == nil {
+		if _, e := LoadTemplateFilepath(root, bp...); e == nil {
 			t.Fatalf("no error for bad template with bad partials\n")
 		}
 	}
@@ -236,7 +236,7 @@ func TestLoadTemplateString(t *testing.T) {
 	}
 }
 
-// func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFile and TestLoadTemplateString
+// func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFilepath and TestLoadTemplateString
 
 func validateExecute(t *testing.T, results string, expect string, e error) {
 	if e != nil {
@@ -281,22 +281,22 @@ func TestExecute(t *testing.T) {
 	d = append(d, data)
 	gd["data"] = d
 
-	if tmpl1, e = LoadTemplateFile(tmplr, tmplp); e != nil {
+	if tmpl1, e = LoadTemplateFilepath(tmplr, tmplp); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if tmpl2, e = LoadTemplateFile(tmplr, tdir); e != nil {
+	if tmpl2, e = LoadTemplateFilepath(tmplr, tdir); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if hmpl1, e = LoadTemplateFile(hmplr, hmplp); e != nil {
+	if hmpl1, e = LoadTemplateFilepath(hmplr, hmplp); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if hmpl2, e = LoadTemplateFile(tmplr, tdir); e != nil {
+	if hmpl2, e = LoadTemplateFilepath(tmplr, tdir); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if mst1, e = LoadTemplateFile(mstr, mstp); e != nil {
+	if mst1, e = LoadTemplateFilepath(mstr, mstp); e != nil {
 		t.Skip("setup failure:", e)
 	}
-	if mst2, e = LoadTemplateFile(tmplr, tdir); e != nil {
+	if mst2, e = LoadTemplateFilepath(tmplr, tdir); e != nil {
 		t.Skip("setup failure:", e)
 	}
 
