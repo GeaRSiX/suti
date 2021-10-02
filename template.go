@@ -23,7 +23,6 @@ import (
 	mst "github.com/cbroglie/mustache"
 	hmpl "html/template"
 	"io"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -86,136 +85,48 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	return
 }
 
-func loadTemplateFileTmpl(root string, partials ...string) (*tmpl.Template, error) {
-	var stat os.FileInfo
-	t, e := tmpl.ParseFiles(root)
-
-	for i := 0; i < len(partials) && e == nil; i++ {
-		p := partials[i]
-		ptype := getTemplateType(p)
-
-		stat, e = os.Stat(p)
-		if e == nil {
-			if ptype == "tmpl" || ptype == "gotmpl" {
-				t, e = t.ParseFiles(p)
-			} else if strings.Contains(p, "*") {
-				t, e = t.ParseGlob(p)
-			} else if stat.IsDir() {
-				e = filepath.Walk(p, func(path string, info fs.FileInfo, err error) error {
-					if err == nil && !info.IsDir() {
-						ptype = getTemplateType(path)
-						if ptype == "tmpl" || ptype == "gotmpl" {
-							t, err = t.ParseFiles(path)
-						}
-					}
-					return err
-				})
-			} else {
-				return nil, fmt.Errorf("non-matching filetype (%s)", p)
-			}
-		}
-	}
-
-	return t, e
-}
-
-func loadTemplateFileHmpl(root string, partials ...string) (*hmpl.Template, error) {
-	var stat os.FileInfo
-	t, e := hmpl.ParseFiles(root)
-
-	for i := 0; i < len(partials) && e == nil; i++ {
-		p := partials[i]
-		ptype := getTemplateType(p)
-
-		stat, e = os.Stat(p)
-		if e == nil {
-			if ptype == "hmpl" || ptype == "gohmpl" {
-				t, e = t.ParseFiles(p)
-			} else if strings.Contains(p, "*") {
-				t, e = t.ParseGlob(p)
-			} else if stat.IsDir() {
-				e = filepath.Walk(p, func(path string, info fs.FileInfo, err error) error {
-					if err == nil && !info.IsDir() {
-						ptype = getTemplateType(path)
-						if ptype == "hmpl" || ptype == "gohmpl" {
-							t, err = t.ParseFiles(path)
-						}
-					}
-					return err
-				})
-			} else {
-				return nil, fmt.Errorf("non-matching filetype (%s)", p)
-			}
-		}
-	}
-
-	return t, e
-}
-
-func loadTemplateFileMst(root string, partials ...string) (*mst.Template, error) {
-	var err error
-	for p, partial := range partials {
-		if err != nil {
-			break
-		}
-
-		if stat, e := os.Stat(partial); e != nil {
-			partials = append(partials[:p], partials[p+1:]...)
-			err = e
-		} else if stat.IsDir() == false {
-			partials[p] = filepath.Dir(partial)
-		} else if strings.Contains(partial, "*") {
-			if paths, e := filepath.Glob(partial); e != nil {
-				partials = append(partials[:p], partials[p+1:]...)
-				err = e
-			} else {
-				partials = append(partials[:p], partials[p+1:]...)
-				partials = append(partials, paths...)
-			}
-		}
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	mstfp := &mst.FileProvider{
-		Paths:      partials,
-		Extensions: []string{".mst", ".mustache"},
-	}
-	return mst.ParseFilePartials(root, mstfp)
-}
-
 // LoadTemplateFilepath loads a Template from file `root`. All files in `partials`
 // that have the same template type (identified by file extension) are also
 // parsed and associated with the parsed root template.
 func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, e error) {
-	if len(rootPath) == 0 {
-		e = fmt.Errorf("no rootPath template specified")
-	}
-	if stat, err := os.Stat(rootPath); err != nil {
-		e = err
+	var stat os.FileInfo
+	if stat, e = os.Stat(rootPath); e != nil {
+		return
 	} else if stat.IsDir() {
 		e = fmt.Errorf("rootPath path must be a file, not a directory: %s", rootPath)
-	}
-
-	if e != nil {
 		return
 	}
 
-	t = Template{Source: rootPath}
-	ttype := getTemplateType(rootPath)
-	if ttype == "tmpl" || ttype == "gotmpl" {
-		t.Template, e = loadTemplateFileTmpl(rootPath, partialPaths...)
-	} else if ttype == "hmpl" || ttype == "gohmpl" {
-		t.Template, e = loadTemplateFileHmpl(rootPath, partialPaths...)
-	} else if ttype == "mst" || ttype == "mustache" {
-		t.Template, e = loadTemplateFileMst(rootPath, partialPaths...)
-	} else {
-		e = fmt.Errorf("'%s' is not a supported template language", ttype)
+	openf := func(path string) *os.File {
+		var f *os.File
+		if f, e = os.Open(path); e != nil {
+			return nil
+		}
+		defer f.Close()
+		return f
 	}
 
-	return
+	lang := strings.TrimPrefix(filepath.Ext(rootPath), ".")
+
+	rootName := filepath.Base(rootPath)
+
+	var root *os.File
+	if root = openf(rootPath); root == nil {
+		return
+	}
+
+	partials := make(map[string]io.Reader)
+	for _, path := range partialPaths {
+		name := filepath.Base(path)
+		if lang == "mst" {
+			name = strings.TrimSuffix(name, filepath.Ext(name))
+		}
+		if partials[name] = openf(path); partials[name] == nil {
+			return
+		}
+	}
+
+	return LoadTemplate(lang, rootName, root, partials)
 }
 
 // LoadTemplateString will convert `root` and `partials` data to io.StringReader variables and
