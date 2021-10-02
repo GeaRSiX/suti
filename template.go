@@ -27,7 +27,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
 	tmpl "text/template"
 )
@@ -219,13 +218,16 @@ func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, 
 	return
 }
 
-// LoadTemplateString
-func LoadTemplateString(lang string, name string, root string, partials ...string) (t Template, e error) {
-	var p []io.Reader
-	for _, partial := range partials {
-		p = append(p, strings.NewReader(partial))
+// LoadTemplateString will convert `root` and `partials` data to io.StringReader variables and
+// return a `LoadTemplate` call using them as parameters.
+// The `partials` map should have the template name to assign the partial template to in the
+// string key and the template data in as the value.
+func LoadTemplateString(lang string, rootName string, root string, partials map[string]string) (t Template, e error) {
+	p := make(map[string]io.Reader)
+	for name, partial := range partials {
+		p[name] = strings.NewReader(partial)
 	}
-	return LoadTemplate(lang, name, strings.NewReader(root), p...)
+	return LoadTemplate(lang, rootName, strings.NewReader(root), p)
 }
 
 // LoadTemplate loads a Template from `root` of type `lang`, named
@@ -234,14 +236,10 @@ func LoadTemplateString(lang string, name string, root string, partials ...strin
 // `root` should be a string of template, with syntax matching that of
 // `lang`. `partials` should be a string of template, with syntax
 // matching that of `lang`.
-func LoadTemplate(lang string, name string, root io.Reader, partials ...io.Reader) (t Template, e error) {
+func LoadTemplate(lang string, rootName string, root io.Reader, partials map[string]io.Reader) (t Template, e error) {
 	if IsSupportedTemplateLang(lang) == -1 {
 		e = fmt.Errorf("invalid type '%s'", lang)
 		return
-	}
-
-	if len(name) == 0 {
-		name = "template"
 	}
 
 	var buf []byte
@@ -251,14 +249,14 @@ func LoadTemplate(lang string, name string, root io.Reader, partials ...io.Reade
 		if buf, e = io.ReadAll(root); e != nil {
 			break
 		}
-		if template, e = tmpl.New(name).Parse(string(buf)); e != nil {
+		if template, e = tmpl.New(rootName).Parse(string(buf)); e != nil {
 			break
 		}
-		for i, p := range partials {
+		for name, p := range partials {
 			if buf, e = io.ReadAll(p); e != nil {
 				break
 			}
-			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(string(buf)); e != nil {
+			if _, e = template.New(name).Parse(string(buf)); e != nil {
 				break
 			}
 		}
@@ -268,14 +266,14 @@ func LoadTemplate(lang string, name string, root io.Reader, partials ...io.Reade
 		if buf, e = io.ReadAll(root); e != nil {
 			break
 		}
-		if template, e = hmpl.New(name).Parse(string(buf)); e != nil {
+		if template, e = hmpl.New(rootName).Parse(string(buf)); e != nil {
 			break
 		}
-		for i, p := range partials {
+		for name, p := range partials {
 			if buf, e = io.ReadAll(p); e != nil {
 				break
 			}
-			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(string(buf)); e != nil {
+			if _, e = template.New(name).Parse(string(buf)); e != nil {
 				break
 			}
 		}
@@ -284,11 +282,11 @@ func LoadTemplate(lang string, name string, root io.Reader, partials ...io.Reade
 		var template *mst.Template
 		mstpp := new(mst.StaticProvider)
 		mstpp.Partials = make(map[string]string)
-		for p, partial := range partials {
+		for name, partial := range partials {
 			if buf, e = io.ReadAll(partial); e != nil {
 				break
 			}
-			mstpp.Partials[name+"-partial"+strconv.Itoa(p)] = string(buf)
+			mstpp.Partials[name] = string(buf)
 		}
 		if e == nil {
 			if buf, e = io.ReadAll(root); e != nil {

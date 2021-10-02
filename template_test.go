@@ -41,7 +41,7 @@ const mstRootGood = "{{eg}} {{> mstPartialGood}}"
 const mstPartialGood = "{{#data}}{{eg}}{{/data}}"
 const mstResult = "0 00"
 const mstRootBad = "{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}"
-const mstPartialBad = "p{{$}{{ > noexist}}"
+const mstPartialBad = "p{{$}}{{ > noexist}"
 
 func TestIsSupportedTemplateLang(t *testing.T) {
 	exts := []string{
@@ -195,45 +195,59 @@ func TestLoadTemplateFilepath(t *testing.T) {
 }
 
 func TestLoadTemplateString(t *testing.T) {
-	var gr, gp, br, bp []string
+	var err error
+	var template Template
+	var templateType string
 
-	gr = append(gr, tmplRootGood)
-	gp = append(gp, tmplPartialGood)
-	br = append(br, tmplRootBad)
-	bp = append(bp, tmplPartialBad)
-
-	gr = append(gr, hmplRootGood)
-	gp = append(gp, hmplPartialGood)
-	br = append(br, hmplRootBad)
-	bp = append(bp, hmplPartialBad)
-
-	gr = append(gr, mstRootGood)
-	gp = append(gp, mstPartialGood)
-	br = append(br, mstRootBad)
-	bp = append(bp, mstPartialBad)
+	testInvalid := func(templateType string, template Template) {
+		t.Logf("invalid '%s' template managed to load", templateType)
+		if buf, err := template.Execute(""); err == nil {
+			t.Fatalf("invalid '%s' template managed to execute: %s", templateType, buf.String())
+		}
+	}
 
 	name := "test"
-	var ttype string
-	for g, root := range gr { // good root, good partials
-		ttype = SupportedTemplateLangs[g]
-		if template, e := LoadTemplateString(ttype, name, root, gp[g]); e != nil {
-			t.Fatalf("'%s' template failed to load: %s", ttype, e)
-		} else {
-			validateTemplate(t, template, ttype, name, name + "-partial0")
+	templateType = "tmpl"
+	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
+		map[string]string{"tmplPartialGood.tmpl": tmplPartialGood}); err != nil {
+			t.Fatalf("'%s' template failed to load", templateType)
 		}
-	}
-	for b, root := range br { // bad root, good partials
-		ttype = SupportedTemplateLangs[b]
-		if _, e := LoadTemplateString(ttype, name, root, gp...); e == nil {
-			t.Fatalf("no error for bad template with good partials\n")
+	if template, err = LoadTemplateString(templateType, name, tmplRootBad,
+		map[string]string{"tmplPartialGood.tmpl": tmplPartialGood}); err == nil {
+			testInvalid(templateType, template)
 		}
-	}
-	for b, root := range br { // bad root, bad partials
-		ttype = SupportedTemplateLangs[b]
-		if _, e := LoadTemplateString(ttype, name, root, bp...); e == nil {
-			t.Fatalf("no error for bad template with bad partials\n")
+	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
+		map[string]string{"tmplPartialGood.tmpl": tmplPartialBad}); err == nil {
+			testInvalid(templateType, template)
 		}
-	}
+
+	templateType = "hmpl"
+	if template, err = LoadTemplateString(templateType, name, hmplRootGood,
+		map[string]string{"hmplPartialGood.hmpl": hmplPartialGood}); err != nil {
+			t.Fatalf("'%s' template failed to load", templateType)
+		}
+	if template, err = LoadTemplateString(templateType, name, hmplRootBad,
+		map[string]string{"hmplPartialGood.hmpl": hmplPartialGood}); err == nil {
+			testInvalid(templateType, template)
+		}
+	if template, err = LoadTemplateString(templateType, name, hmplRootGood,
+		map[string]string{"hmplPartialGood.hmpl": hmplPartialBad}); err == nil {
+			testInvalid(templateType, template)
+		}
+
+	templateType = "mst"
+	if template, err = LoadTemplateString("mst", "test", mstRootGood,
+		map[string]string{"mstPartialGood": mstPartialGood}); err != nil {
+			t.Fatalf("'%s' template failed to load", templateType)
+		}
+	if template, err = LoadTemplateString(templateType, name, mstRootBad,
+		map[string]string{"mstPartialGood": mstPartialGood}); err == nil {
+			testInvalid(templateType, template)
+		}
+	if template, err = LoadTemplateString(templateType, name, mstRootGood,
+		map[string]string{"mstPartialGood": mstPartialBad}); err == nil {
+			testInvalid(templateType, template)
+		}
 }
 
 // func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFilepath and TestLoadTemplateString
