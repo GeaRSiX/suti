@@ -22,6 +22,7 @@ import (
 	"fmt"
 	mst "github.com/cbroglie/mustache"
 	hmpl "html/template"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -218,19 +219,24 @@ func LoadTemplateFile(root string, partials ...string) (t Template, e error) {
 	return
 }
 
-// LoadTemplateString loads a Template from string `root` of type `ttype`, named `name`.
-// `ttype` must be an element in `SupportedTemplateLangs`.
+// LoadTemplateString
+func LoadTemplateString(lang string, name string, root string, partials ...string) (t Template, e error) {
+	var p []io.Reader
+	for _, partial := range partials {
+		p = append(p, strings.NewReader(partial))
+	}
+	return LoadTemplate(lang, name, strings.NewReader(root), p...)
+}
+
+// LoadTemplate loads a Template from `root` of type `lang`, named
+// `name`. `lang` must be an element in `SupportedTemplateLangs`.
 // `name` is optional, if empty the template name will be "template".
-// `root` should be a string of template, with syntax matching that of `ttype`.
-// `partials` should be a string of template, with syntax matching that of `ttype`.
-func LoadTemplateString(ttype string, name string, root string, partials ...string) (t Template, e error) {
-	if len(root) == 0 {
-		e = fmt.Errorf("no root template")
-	}
-	if IsSupportedTemplateLang(ttype) == -1 {
-		e = fmt.Errorf("invalid type '%s'", ttype)
-	}
-	if e != nil {
+// `root` should be a string of template, with syntax matching that of
+// `lang`. `partials` should be a string of template, with syntax
+// matching that of `lang`.
+func LoadTemplate(lang string, name string, root io.Reader, partials ...io.Reader) (t Template, e error) {
+	if IsSupportedTemplateLang(lang) == -1 {
+		e = fmt.Errorf("invalid type '%s'", lang)
 		return
 	}
 
@@ -238,25 +244,38 @@ func LoadTemplateString(ttype string, name string, root string, partials ...stri
 		name = "template"
 	}
 
-	switch(ttype) {
+	var buf []byte
+	switch(lang) {
 	case "tmpl":
 		var template *tmpl.Template
-		if template, e = tmpl.New(name).Parse(root); e != nil {
+		if buf, e = io.ReadAll(root); e != nil {
+			break
+		}
+		if template, e = tmpl.New(name).Parse(string(buf)); e != nil {
 			break
 		}
 		for i, p := range partials {
-			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
+			if buf, e = io.ReadAll(p); e != nil {
+				break
+			}
+			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(string(buf)); e != nil {
 				break
 			}
 		}
 		t.Template = template
 	case "hmpl":
 		var template *hmpl.Template
-		if template, e = hmpl.New(name).Parse(root); e != nil {
+		if buf, e = io.ReadAll(root); e != nil {
+			break
+		}
+		if template, e = hmpl.New(name).Parse(string(buf)); e != nil {
 			break
 		}
 		for i, p := range partials {
-			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(p); e != nil {
+			if buf, e = io.ReadAll(p); e != nil {
+				break
+			}
+			if _, e = template.New(name + "-partial" + strconv.Itoa(i)).Parse(string(buf)); e != nil {
 				break
 			}
 		}
@@ -266,12 +285,20 @@ func LoadTemplateString(ttype string, name string, root string, partials ...stri
 		mstpp := new(mst.StaticProvider)
 		mstpp.Partials = make(map[string]string)
 		for p, partial := range partials {
-			mstpp.Partials[name+"-partial"+strconv.Itoa(p)] = partial
+			if buf, e = io.ReadAll(partial); e != nil {
+				break
+			}
+			mstpp.Partials[name+"-partial"+strconv.Itoa(p)] = string(buf)
 		}
-		template, e = mst.ParseStringPartials(root, mstpp)
-		t.Template = template
+		if e == nil {
+			if buf, e = io.ReadAll(root); e != nil {
+				break
+			}
+			template, e = mst.ParseStringPartials(string(buf), mstpp)
+			t.Template = template
+		}
 	default:
-		e = fmt.Errorf("'%s' is not a supported template language", ttype)
+		e = fmt.Errorf("'%s' is not a supported template language", lang)
 	}
 
 	return

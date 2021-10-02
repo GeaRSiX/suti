@@ -236,6 +236,8 @@ func TestLoadTemplateString(t *testing.T) {
 	}
 }
 
+// func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFile and TestLoadTemplateString
+
 func validateExecute(t *testing.T, results string, expect string, e error) {
 	if e != nil {
 		t.Fatal(e)
