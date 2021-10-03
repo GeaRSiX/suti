@@ -97,23 +97,15 @@ func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, 
 		return
 	}
 
-	openf := func(path string) *os.File {
-		var f *os.File
-		if f, e = os.Open(path); e != nil {
-			return nil
-		}
-		defer f.Close()
-		return f
-	}
-
 	lang := strings.TrimPrefix(filepath.Ext(rootPath), ".")
 
 	rootName := filepath.Base(rootPath)
 
 	var root *os.File
-	if root = openf(rootPath); root == nil {
+	if root, e = os.Open(rootPath); e != nil {
 		return
 	}
+	defer root.Close()
 
 	partials := make(map[string]io.Reader)
 	for _, path := range partialPaths {
@@ -121,9 +113,18 @@ func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, 
 		if lang == "mst" {
 			name = strings.TrimSuffix(name, filepath.Ext(name))
 		}
-		if partials[name] = openf(path); partials[name] == nil {
+
+		var p *os.File
+		if stat, e = os.Stat(path); e != nil {
+			return
+		} else if stat.IsDir() {
+		}
+
+		if p, e = os.Open(path); e != nil {
 			return
 		}
+		defer p.Close()
+		partials[name] = p
 	}
 
 	return LoadTemplate(lang, rootName, root, partials)
