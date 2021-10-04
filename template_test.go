@@ -25,23 +25,23 @@ import (
 	"testing"
 )
 
-const tmplRootGood = "{{.eg}} {{ template \"tmplPartialGood.tmpl\" . }}"
-const tmplPartialGood = "{{range .data}}{{.eg}}{{end}}"
-const tmplResult = "0 00"
-const tmplRootBad = "{{ example }}} {{{ template \"tmplPartialBad.tmpl\" . }}"
-const tmplPartialBad = "{{{ .example }}"
+const tmplRootGood = `{{.eg}} {{ template "tmplPartialGood" . }}`
+const tmplPartialGood = `{{.eg}}`
+const tmplResult = `0 0`
+const tmplRootBad = `{{ example }}} {{{ template \"tmplPartialBad\" . }}`
+const tmplPartialBad = `{{{ .example }}`
 
-const hmplRootGood = "<!DOCTYPE html><html><p>{{.eg}} {{ template \"hmplPartialGood.hmpl\" . }}</p></html>"
-const hmplPartialGood = "<b>{{range .data}}{{.eg}}{{end}}</b>"
-const hmplResult = "<!DOCTYPE html><html><p>0 <b>00</b></p></html>"
-const hmplRootBad = "{{ example }} {{{ template \"hmplPartialBad.hmpl\" . }}"
-const hmplPartialBad = "<b>{{{ .example2 }}</b>"
+const hmplRootGood = `<!DOCTYPE html><html><p>{{.eg}} {{ template "hmplPartialGood" . }}</p></html>`
+const hmplPartialGood = `<b>{{.eg}}</b>`
+const hmplResult = `<!DOCTYPE html><html><p>0 <b>0</b></p></html>`
+const hmplRootBad = `{{ example }} {{{ template "hmplPartialBad" . }}`
+const hmplPartialBad = `<b>{{{ .example2 }}</b>`
 
-const mstRootGood = "{{eg}} {{> mstPartialGood}}"
-const mstPartialGood = "{{#data}}{{eg}}{{/data}}"
-const mstResult = "0 00"
-const mstRootBad = "{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}"
-const mstPartialBad = "p{{$}}{{ > noexist}"
+const mstRootGood = `{{eg}} {{> mstPartialGood}}`
+const mstPartialGood = `{{eg}}`
+const mstResult = `0 0`
+const mstRootBad = `{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}`
+const mstPartialBad = `p{{$}}{{ > noexist}`
 
 func TestIsSupportedTemplateLang(t *testing.T) {
 	exts := []string{
@@ -148,25 +148,25 @@ func TestLoadTemplateFilepath(t *testing.T) {
 
 	gr = append(gr, tdir+"/goodRoot.tmpl")
 	writeTestFile(t, gr[i], tmplRootGood)
-	gp = append(gp, tdir+"/goodPartial.gotmpl")
+	gp = append(gp, tdir+"/goodPartial.tmpl")
 	writeTestFile(t, gp[i], tmplPartialGood)
 	br = append(br, tdir+"/badRoot.tmpl")
 	writeTestFile(t, br[i], tmplRootBad)
-	bp = append(bp, tdir+"/badPartial.gotmpl")
+	bp = append(bp, tdir+"/badPartial.tmpl")
 	writeTestFile(t, bp[i], tmplPartialBad)
 	i++
 
 	gr = append(gr, tdir+"/goodRoot.hmpl")
 	writeTestFile(t, gr[i], hmplRootGood)
-	gp = append(gp, tdir+"/goodPartial.gohmpl")
+	gp = append(gp, tdir+"/goodPartial.hmpl")
 	writeTestFile(t, gp[i], hmplPartialGood)
 	br = append(br, tdir+"/badRoot.hmpl")
 	writeTestFile(t, br[i], hmplRootBad)
-	bp = append(bp, tdir+"/badPartial.gohmpl")
+	bp = append(bp, tdir+"/badPartial.hmpl")
 	writeTestFile(t, bp[i], hmplPartialBad)
 	i++
 
-	gr = append(gr, tdir+"/goodRoot.mustache")
+	gr = append(gr, tdir+"/goodRoot.mst")
 	writeTestFile(t, gr[i], mstRootGood)
 	gp = append(gp, tdir+"/goodPartial.mst")
 	writeTestFile(t, gp[i], mstPartialGood)
@@ -236,7 +236,7 @@ func TestLoadTemplateString(t *testing.T) {
 		}
 
 	templateType = "mst"
-	if template, err = LoadTemplateString("mst", "test", mstRootGood,
+	if template, err = LoadTemplateString(templateType, name, mstRootGood,
 		map[string]string{"mstPartialGood": mstPartialGood}); err != nil {
 			t.Fatalf("'%s' template failed to load", templateType)
 		}
@@ -261,71 +261,40 @@ func validateExecute(t *testing.T, results string, expect string, e error) {
 }
 
 func TestExecute(t *testing.T) {
-	var e error
-	var gd, data map[string]interface{}
-	var d []map[string]interface{}
-	var tmplr, tmplp, hmplr, hmplp, mstr, mstp string
-	var tmpl1, tmpl2, hmpl1, hmpl2, mst1, mst2 Template
+	t.Parallel()
+	
+	var err error
+	var tmpl Template
+	var data map[string]interface{}
 	var results bytes.Buffer
-	tdir := t.TempDir()
-
-	tmplr = tdir + "/tmplRootGood.gotmpl"
-	writeTestFile(t, tmplr, tmplRootGood)
-	tmplp = tdir + "/tmplPartialGood.tmpl"
-	writeTestFile(t, tmplp, tmplPartialGood)
-	hmplr = tdir + "/hmplRootGood.gohmpl"
-	writeTestFile(t, hmplr, hmplRootGood)
-	hmplp = tdir + "/hmplPartialGood.hmpl"
-	writeTestFile(t, hmplp, hmplPartialGood)
-	mstr = tdir + "/mstRootGood.mustache"
-	writeTestFile(t, mstr, mstRootGood)
-	mstp = tdir + "/mstPartialGood.mst"
-	writeTestFile(t, mstp, mstPartialGood)
-
-	if e = LoadData("json", strings.NewReader(good["json"]), &gd); e != nil {
-		t.Skip("setup failure:", e)
+	
+	if tmpl, err = LoadTemplateString("tmpl", "tmplRootGood", tmplRootGood,
+		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
+			t.Skip("setup failure:", err)
+		}
+	if err = LoadData("json", strings.NewReader(good["json"]), &data); err != nil {
+		t.Skip("setup failure:", err)
 	}
-	if e = LoadData("yaml", strings.NewReader(good["yaml"]), &data); e != nil {
-		t.Skip("setup failure:", e)
+	results, err = tmpl.Execute(data)
+	validateExecute(t, results.String(), tmplResult, err)
+	
+	if tmpl, err = LoadTemplateString("hmpl", "hmplRootGood", hmplRootGood,
+		map[string]string{"hmplPartialGood": hmplPartialGood}); err != nil {
+			t.Skip("setup failure:", err)
+		}
+	if err = LoadData("yaml", strings.NewReader(good["yaml"]), &data); err != nil {
+		t.Skip("setup failure:", err)
 	}
-	d = append(d, data)
-	if e = LoadData("toml", strings.NewReader(good["toml"]), &data); e != nil {
-		t.Skip("setup failure:", e)
+	results, err = tmpl.Execute(data)
+	validateExecute(t, results.String(), hmplResult, err)
+	
+	if tmpl, err = LoadTemplateString("mst", "mstRootGood", mstRootGood,
+		map[string]string{"mstPartialGood": mstPartialGood}); err != nil {
+			t.Skip("setup failure:", err)
+		}
+	if err = LoadData("toml", strings.NewReader(good["toml"]), &data); err != nil {
+		t.Skip("setup failure:", err)
 	}
-	d = append(d, data)
-	gd["data"] = d
-
-	if tmpl1, e = LoadTemplateFilepath(tmplr, tmplp); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	if tmpl2, e = LoadTemplateFilepath(tmplr, tdir); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	if hmpl1, e = LoadTemplateFilepath(hmplr, hmplp); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	if hmpl2, e = LoadTemplateFilepath(tmplr, tdir); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	if mst1, e = LoadTemplateFilepath(mstr, mstp); e != nil {
-		t.Skip("setup failure:", e)
-	}
-	if mst2, e = LoadTemplateFilepath(tmplr, tdir); e != nil {
-		t.Skip("setup failure:", e)
-	}
-
-	results, e = tmpl1.Execute(gd)
-	validateExecute(t, results.String(), tmplResult, e)
-	results, e = tmpl2.Execute(gd)
-	validateExecute(t, results.String(), tmplResult, e)
-
-	results, e = hmpl1.Execute(gd)
-	validateExecute(t, results.String(), hmplResult, e)
-	results, e = hmpl2.Execute(gd)
-	validateExecute(t, results.String(), tmplResult, e)
-
-	results, e = mst1.Execute(gd)
-	validateExecute(t, results.String(), mstResult, e)
-	results, e = mst2.Execute(gd)
-	validateExecute(t, results.String(), mstResult, e)
+	results, err = tmpl.Execute(data)
+	validateExecute(t, results.String(), mstResult, err)
 }
