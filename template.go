@@ -100,6 +100,9 @@ func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, 
 	lang := strings.TrimPrefix(filepath.Ext(rootPath), ".")
 
 	rootName := filepath.Base(rootPath)
+	if lang == "mst" {
+		rootName = strings.TrimSuffix(rootName, filepath.Ext(rootName))
+	}
 
 	var root *os.File
 	if root, e = os.Open(rootPath); e != nil {

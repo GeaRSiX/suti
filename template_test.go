@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"os"
 )
 
 const tmplRootGood = `{{.eg}} {{ template "tmplPartialGood" . }}`
@@ -76,16 +77,13 @@ func TestIsSupportedTemplateLang(t *testing.T) {
 func validateTemplate(t *testing.T, template Template, templateType string, rootName string, partialNames ...string) {
 	types := map[string]string{
 		"tmpl":     "*template.Template",
-		"gotmpl":   "*template.Template",
 		"hmpl":     "*template.Template",
-		"gohmpl":   "*template.Template",
 		"mst":      "*mustache.Template",
-		"mustache": "*mustache.Template",
 	}
 
 	rt := reflect.TypeOf(template.Template).String()
 	if rt != types[templateType] {
-		t.Fatalf("invalid template type '%s' loaded, should be '%s'", rt, types[templateType])
+		t.Fatalf("invalid template type '%s' loaded, should be '%s' (%s)", rt, types[templateType], templateType)
 	}
 
 	if types[templateType] == "*template.Template" {
@@ -105,90 +103,77 @@ func validateTemplate(t *testing.T, template Template, templateType string, root
 	}
 }
 
-func validateTemplateFile(t *testing.T, template Template, root string, partials ...string) {
-	types := map[string]string{
-		"tmpl":     "*template.Template",
-		"gotmpl":   "*template.Template",
-		"hmpl":     "*template.Template",
-		"gohmpl":   "*template.Template",
-		"mst":      "*mustache.Template",
-		"mustache": "*mustache.Template",
+func validateTemplateFile(t *testing.T, template Template, rootPath string, partialPaths ...string) {
+	rType := getTemplateType(rootPath)
+	rName := filepath.Base(rootPath)
+	if rType == "mst" {
+		rName = strings.TrimSuffix(rName, filepath.Ext(rName))
 	}
-
-	ttype := getTemplateType(root)
-	if reflect.TypeOf(template.Template).String() != types[ttype] {
-		t.Fatal("invalid template loaded")
-	}
-
-	if types[ttype] == "*template.Template" {
-		var rv []reflect.Value
-		for _, p := range partials {
-			p = filepath.Base(p)
-			rv := reflect.ValueOf(template.Template).MethodByName("Lookup").Call([]reflect.Value{
-				reflect.ValueOf(p),
-			})
-			if rv[0].IsNil() {
-				t.Fatalf("missing defined template '%s'", p)
-				rv = reflect.ValueOf(template.Template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
-				t.Log(rv)
-			}
+	var pNames []string
+	for _, path := range partialPaths {
+		name := filepath.Base(path)
+		if rType == "mst" {
+			name = strings.TrimSuffix(name, filepath.Ext(name))
 		}
-		rv = reflect.ValueOf(template.Template).MethodByName("Name").Call([]reflect.Value{})
-		if rv[0].String() != filepath.Base(root) {
-			t.Fatalf("invalid template name: %s does not match %s",
-				rv[0].String(), filepath.Base(root))
-		}
+		pNames = append(pNames, name)
 	}
+	
+	validateTemplate(t, template, rType, rName, pNames...)
 }
 
 func TestLoadTemplateFilepath(t *testing.T) {
-	var gr, gp, br, bp []string
+	t.Parallel()
+	
 	tdir := t.TempDir()
-	i := 0
-
-	gr = append(gr, tdir+"/goodRoot.tmpl")
-	writeTestFile(t, gr[i], tmplRootGood)
-	gp = append(gp, tdir+"/goodPartial.tmpl")
-	writeTestFile(t, gp[i], tmplPartialGood)
-	br = append(br, tdir+"/badRoot.tmpl")
-	writeTestFile(t, br[i], tmplRootBad)
-	bp = append(bp, tdir+"/badPartial.tmpl")
-	writeTestFile(t, bp[i], tmplPartialBad)
-	i++
-
-	gr = append(gr, tdir+"/goodRoot.hmpl")
-	writeTestFile(t, gr[i], hmplRootGood)
-	gp = append(gp, tdir+"/goodPartial.hmpl")
-	writeTestFile(t, gp[i], hmplPartialGood)
-	br = append(br, tdir+"/badRoot.hmpl")
-	writeTestFile(t, br[i], hmplRootBad)
-	bp = append(bp, tdir+"/badPartial.hmpl")
-	writeTestFile(t, bp[i], hmplPartialBad)
-	i++
-
-	gr = append(gr, tdir+"/goodRoot.mst")
-	writeTestFile(t, gr[i], mstRootGood)
-	gp = append(gp, tdir+"/goodPartial.mst")
-	writeTestFile(t, gp[i], mstPartialGood)
-	br = append(br, tdir+"/badRoot.mst")
-	writeTestFile(t, br[i], mstRootBad)
-	bp = append(bp, tdir+"/badPartial.mst")
-	writeTestFile(t, bp[i], mstPartialBad)
-
-	for g, root := range gr { // good root, good partials
-		if template, e := LoadTemplateFilepath(root, gp[g]); e != nil {
-			t.Fatal(e)
-		} else {
-			validateTemplateFile(t, template, root, gp[g])
+	var goodRoots, goodPartials, badRoots, badPartials []string
+	
+	createFile := func(path string, data string) {
+		if err := os.WriteFile(path, []byte(data), 0666); err != nil {
+			t.Error(err)
 		}
 	}
-	for _, root := range br { // bad root, good partials
-		if _, e := LoadTemplateFilepath(root, gp...); e == nil {
+	
+	goodRoots = append(goodRoots, tdir+"/goodRoot.tmpl")
+	createFile(goodRoots[len(goodRoots)-1], tmplRootGood)
+	goodPartials = append(goodPartials, tdir+"/goodPartial.tmpl")
+	createFile(goodPartials[len(goodPartials)-1], tmplPartialGood)
+	badRoots = append(badRoots, tdir+"/badRoot.tmpl")
+	createFile(badRoots[len(badRoots)-1], tmplRootBad)
+	badPartials = append(badRoots, tdir+"/badPartials.tmpl")
+	createFile(badPartials[len(badPartials)-1], tmplPartialBad)
+	
+	goodRoots = append(goodRoots, tdir+"/goodRoot.hmpl")
+	createFile(goodRoots[len(goodRoots)-1], hmplRootGood)
+	goodPartials = append(goodPartials, tdir+"/goodPartial.hmpl")
+	createFile(goodPartials[len(goodPartials)-1], hmplPartialGood)
+	badRoots = append(badRoots, tdir+"/badRoot.hmpl")
+	createFile(badRoots[len(badRoots)-1], hmplRootBad)
+	badPartials = append(badRoots, tdir+"/badPartials.hmpl")
+	createFile(badPartials[len(badPartials)-1], hmplPartialBad)
+	
+	goodRoots = append(goodRoots, tdir+"/goodRoot.mst")
+	createFile(goodRoots[len(goodRoots)-1], mstRootGood)
+	goodPartials = append(goodPartials, tdir+"/goodPartial.mst")
+	createFile(goodPartials[len(goodPartials)-1], mstPartialGood)
+	badRoots = append(badRoots, tdir+"/badRoot.mst")
+	createFile(badRoots[len(badRoots)-1], mstRootBad)
+	badPartials = append(badRoots, tdir+"/badPartials.mst")
+	createFile(badPartials[len(badPartials)-1], mstPartialBad)
+	
+	for i, root := range goodRoots { // good root, good partials
+		if template, e := LoadTemplateFilepath(root, goodPartials[i]); e != nil {
+			t.Fatal(e)
+		} else {
+			validateTemplateFile(t, template, root, goodPartials[i])
+		}
+	}
+	for i, root := range badRoots { // bad root, good partials
+		if _, e := LoadTemplateFilepath(root, goodPartials[i]); e == nil {
 			t.Fatalf("no error for bad template with good partials\n")
 		}
 	}
-	for _, root := range br { // bad root, bad partials
-		if _, e := LoadTemplateFilepath(root, bp...); e == nil {
+	for i, root := range badRoots { // bad root, bad partials
+		if _, e := LoadTemplateFilepath(root, badPartials[i]); e == nil {
 			t.Fatalf("no error for bad template with bad partials\n")
 		}
 	}
