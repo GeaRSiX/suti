@@ -81,22 +81,22 @@ func validateTemplate(t *testing.T, template Template, templateType string, root
 		"mst":      "*mustache.Template",
 	}
 
-	rt := reflect.TypeOf(template.Template).String()
+	rt := reflect.TypeOf(template.T).String()
 	if rt != types[templateType] {
 		t.Fatalf("invalid template type '%s' loaded, should be '%s' (%s)", rt, types[templateType], templateType)
 	}
 
-	if types[templateType] == "*template.Template" {
+	if types[templateType] == "*template.T" {
 		var rv []reflect.Value
 		for _, p := range partialNames {
-			rv := reflect.ValueOf(template.Template).MethodByName("Lookup").Call([]reflect.Value{reflect.ValueOf(p)})
+			rv := reflect.ValueOf(template.T).MethodByName("Lookup").Call([]reflect.Value{reflect.ValueOf(p)})
 			if rv[0].IsNil() {
 				t.Fatalf("missing defined template '%s'", p)
-				rv = reflect.ValueOf(template.Template).MethodByName("DefinedTemplates").Call([]reflect.Value{})
+				rv = reflect.ValueOf(template.T).MethodByName("DefinedTemplates").Call([]reflect.Value{})
 				t.Log(rv)
 			}
 		}
-		rv = reflect.ValueOf(template.Template).MethodByName("Name").Call([]reflect.Value{})
+		rv = reflect.ValueOf(template.T).MethodByName("Name").Call([]reflect.Value{})
 		if rv[0].String() != rootName {
 			t.Fatalf("invalid template name: %s does not match %s", rv[0].String(), rootName)
 		}

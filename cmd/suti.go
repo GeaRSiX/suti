@@ -96,7 +96,7 @@ func main() {
 	opts.GlobalDataPaths = loadFilePaths(opts.GlobalDataPaths...)
 	for _, path := range opts.GlobalDataPaths {
 		var d Data
-		err = suti.LoadDataFile(path, &d)
+		err = suti.LoadDataFilepath(path, &d)
 		assert(err, "failed to load global data '%s'", path)
 		data = append(data, d)
 	}
@@ -110,13 +110,13 @@ func main() {
 	data = make([]Data, 0)
 	for _, path := range opts.DataPaths {
 		var d Data
-		err = suti.LoadDataFile(path, &d)
+		err = suti.LoadDataFilepath(path, &d)
 		assert(err, "failed to load data '%s'", path)
 		data = append(data, d)
 	}
 	global[opts.DataKey] = data
 
-	template, err = suti.LoadTemplateFile(opts.RootPath, opts.PartialPaths...)
+	template, err = suti.LoadTemplateFilepath(opts.RootPath, opts.PartialPaths...)
 	assert(err, "unable to load templates")
 
 	out, err = template.Execute(global)

@@ -126,7 +126,7 @@ func TestLoadData(t *testing.T) {
 	return
 }
 
-func TestLoadDataFile(t *testing.T) {
+func TestLoadDataFilepath(t *testing.T) {
 	var d interface{}
 	var e error
 	var p string
@@ -135,25 +135,25 @@ func TestLoadDataFile(t *testing.T) {
 	for lang, data := range good {
 		p = tdir + "/good." + lang
 		writeTestFile(t, p, data)
-		e = LoadDataFile(p, &d)
+		e = LoadDataFilepath(p, &d)
 		validateData(t, d, e, lang)
 	}
 
 	p = tdir + "/bad.json"
 	writeTestFile(t, p, badData)
-	e = LoadDataFile(p, &d)
+	e = LoadDataFilepath(p, &d)
 	if e == nil {
 		t.Fatalf("bad data passed")
 	}
 
 	p = tdir + "/empty.json"
 	writeTestFile(t, p, "")
-	e = LoadDataFile(p, &d)
+	e = LoadDataFilepath(p, &d)
 	if e != nil {
 		t.Fatalf("empty file failed: %s", e)
 	}
 
-	if e = LoadDataFile("non-existing-file.toml", &d); e == nil {
+	if e = LoadDataFilepath("non-existing-file.toml", &d); e == nil {
 		t.Fatalf("non-existing file passed: %s, %s", d, e)
 	}
 

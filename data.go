@@ -77,7 +77,7 @@ func LoadData(lang string, in io.Reader, outp interface{}) error {
 // LoadDataFile loads all the data from the file found at `path` into the the
 // format of that files extension (e.g. "x.json" will be loaded as a json).
 // The result is written to the value pointed at by `outp`.
-func LoadDataFile(path string, outp interface{}) error {
+func LoadDataFilepath(path string, outp interface{}) error {
 	f, e := os.Open(path)
 	defer f.Close()
 

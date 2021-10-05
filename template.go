@@ -53,10 +53,12 @@ func getTemplateType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-// Template is a generic interface to any template parsed from LoadTemplateFile
+// Template is a wrapper to interface with any template parsed by suti.
+// Ideally it would have just been an interface{} that defines Execute but
+// the libaries being used aren't that uniform.
 type Template struct {
-	Source   string
-	Template interface{}
+	Name string
+	T interface{}
 }
 
 // Execute executes `t` against `d`. Reflection is used to determine
@@ -64,7 +66,7 @@ type Template struct {
 func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	var funcName string
 	var params []reflect.Value
-	switch (reflect.TypeOf(t.Template).String()) {
+	switch (reflect.TypeOf(t.T).String()) {
 	case "*template.Template": // golang templates
 		funcName = "Execute"
 		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(d)}
@@ -72,11 +74,11 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 		funcName = "FRender"
 		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(d)}
 	default:
-		err = fmt.Errorf("unable to infer template type '%s'", reflect.TypeOf(t.Template).String())
+		err = fmt.Errorf("unable to infer template type '%s'", reflect.TypeOf(t.T).String())
 	}
 
 	if err == nil {
-		rval := reflect.ValueOf(t.Template).MethodByName(funcName).Call(params)
+		rval := reflect.ValueOf(t.T).MethodByName(funcName).Call(params)
 		if !rval[0].IsNil() { // err != nil
 			err = rval[0].Interface().(error)
 		}
@@ -175,7 +177,7 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 				break
 			}
 		}
-		t.Template = template
+		t.T = template
 	case "hmpl":
 		var template *hmpl.Template
 		if buf, e = io.ReadAll(root); e != nil {
@@ -192,7 +194,7 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 				break
 			}
 		}
-		t.Template = template
+		t.T = template
 	case "mst":
 		var template *mst.Template
 		mstpp := new(mst.StaticProvider)
@@ -208,7 +210,7 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 				break
 			}
 			template, e = mst.ParseStringPartials(string(buf), mstpp)
-			t.Template = template
+			t.T = template
 		}
 	default:
 		e = fmt.Errorf("'%s' is not a supported template language", lang)
