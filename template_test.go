@@ -194,29 +194,29 @@ func TestLoadTemplateString(t *testing.T) {
 	name := "test"
 	templateType = "tmpl"
 	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
-		map[string]string{"tmplPartialGood.tmpl": tmplPartialGood}); err != nil {
+		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
 			t.Fatalf("'%s' template failed to load", templateType)
 		}
 	if template, err = LoadTemplateString(templateType, name, tmplRootBad,
-		map[string]string{"tmplPartialGood.tmpl": tmplPartialGood}); err == nil {
+		map[string]string{"tmplPartialGood": tmplPartialGood}); err == nil {
 			testInvalid(templateType, template)
 		}
 	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
-		map[string]string{"tmplPartialGood.tmpl": tmplPartialBad}); err == nil {
+		map[string]string{"tmplPartialGood": tmplPartialBad}); err == nil {
 			testInvalid(templateType, template)
 		}
 
 	templateType = "hmpl"
 	if template, err = LoadTemplateString(templateType, name, hmplRootGood,
-		map[string]string{"hmplPartialGood.hmpl": hmplPartialGood}); err != nil {
+		map[string]string{"hmplPartialGood": hmplPartialGood}); err != nil {
 			t.Fatalf("'%s' template failed to load", templateType)
 		}
 	if template, err = LoadTemplateString(templateType, name, hmplRootBad,
-		map[string]string{"hmplPartialGood.hmpl": hmplPartialGood}); err == nil {
+		map[string]string{"hmplPartialGood": hmplPartialGood}); err == nil {
 			testInvalid(templateType, template)
 		}
 	if template, err = LoadTemplateString(templateType, name, hmplRootGood,
-		map[string]string{"hmplPartialGood.hmpl": hmplPartialBad}); err == nil {
+		map[string]string{"hmplPartialGood": hmplPartialBad}); err == nil {
 			testInvalid(templateType, template)
 		}
 
@@ -247,12 +247,12 @@ func validateExecute(t *testing.T, results string, expect string, e error) {
 
 func TestExecute(t *testing.T) {
 	t.Parallel()
-	
+
 	var err error
 	var tmpl Template
 	var data map[string]interface{}
 	var results bytes.Buffer
-	
+
 	if tmpl, err = LoadTemplateString("tmpl", "tmplRootGood", tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
 			t.Skip("setup failure:", err)
@@ -262,7 +262,7 @@ func TestExecute(t *testing.T) {
 	}
 	results, err = tmpl.Execute(data)
 	validateExecute(t, results.String(), tmplResult, err)
-	
+
 	if tmpl, err = LoadTemplateString("hmpl", "hmplRootGood", hmplRootGood,
 		map[string]string{"hmplPartialGood": hmplPartialGood}); err != nil {
 			t.Skip("setup failure:", err)
@@ -272,7 +272,7 @@ func TestExecute(t *testing.T) {
 	}
 	results, err = tmpl.Execute(data)
 	validateExecute(t, results.String(), hmplResult, err)
-	
+
 	if tmpl, err = LoadTemplateString("mst", "mstRootGood", mstRootGood,
 		map[string]string{"mstPartialGood": mstPartialGood}); err != nil {
 			t.Skip("setup failure:", err)

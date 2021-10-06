@@ -66,7 +66,12 @@ type Template struct {
 func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	var funcName string
 	var params []reflect.Value
-	switch (reflect.TypeOf(t.T).String()) {
+	tType := reflect.TypeOf(t.T)
+	if tType == nil {
+		err = fmt.Errorf("template.T is nil")
+		return
+	}
+	switch (tType.String()) {
 	case "*template.Template": // golang templates
 		funcName = "Execute"
 		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(d)}
