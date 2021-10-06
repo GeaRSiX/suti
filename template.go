@@ -58,7 +58,7 @@ func getTemplateType(path string) string {
 // the libaries being used aren't that uniform.
 type Template struct {
 	Name string
-	T interface{}
+	T    interface{}
 }
 
 // Execute executes `t` against `d`. Reflection is used to determine
@@ -71,7 +71,7 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 		err = fmt.Errorf("template.T is nil")
 		return
 	}
-	switch (tType.String()) {
+	switch tType.String() {
 	case "*template.Template": // golang templates
 		funcName = "Execute"
 		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(d)}
@@ -165,7 +165,7 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 	}
 
 	var buf []byte
-	switch(lang) {
+	switch lang {
 	case "tmpl":
 		var template *tmpl.Template
 		if buf, e = io.ReadAll(root); e != nil {
@@ -223,4 +223,3 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 
 	return
 }
-

@@ -19,11 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
-	"os"
 )
 
 const tmplRootGood = `{{.eg}} {{ template "tmplPartialGood" . }}`
@@ -76,9 +76,9 @@ func TestIsSupportedTemplateLang(t *testing.T) {
 
 func validateTemplate(t *testing.T, template Template, templateType string, rootName string, partialNames ...string) {
 	types := map[string]string{
-		"tmpl":     "*template.Template",
-		"hmpl":     "*template.Template",
-		"mst":      "*mustache.Template",
+		"tmpl": "*template.Template",
+		"hmpl": "*template.Template",
+		"mst":  "*mustache.Template",
 	}
 
 	rt := reflect.TypeOf(template.T).String()
@@ -117,22 +117,22 @@ func validateTemplateFile(t *testing.T, template Template, rootPath string, part
 		}
 		pNames = append(pNames, name)
 	}
-	
+
 	validateTemplate(t, template, rType, rName, pNames...)
 }
 
 func TestLoadTemplateFilepath(t *testing.T) {
 	t.Parallel()
-	
+
 	tdir := t.TempDir()
 	var goodRoots, goodPartials, badRoots, badPartials []string
-	
+
 	createFile := func(path string, data string) {
 		if err := os.WriteFile(path, []byte(data), 0666); err != nil {
 			t.Error(err)
 		}
 	}
-	
+
 	goodRoots = append(goodRoots, tdir+"/goodRoot.tmpl")
 	createFile(goodRoots[len(goodRoots)-1], tmplRootGood)
 	goodPartials = append(goodPartials, tdir+"/goodPartial.tmpl")
@@ -141,7 +141,7 @@ func TestLoadTemplateFilepath(t *testing.T) {
 	createFile(badRoots[len(badRoots)-1], tmplRootBad)
 	badPartials = append(badRoots, tdir+"/badPartials.tmpl")
 	createFile(badPartials[len(badPartials)-1], tmplPartialBad)
-	
+
 	goodRoots = append(goodRoots, tdir+"/goodRoot.hmpl")
 	createFile(goodRoots[len(goodRoots)-1], hmplRootGood)
 	goodPartials = append(goodPartials, tdir+"/goodPartial.hmpl")
@@ -150,7 +150,7 @@ func TestLoadTemplateFilepath(t *testing.T) {
 	createFile(badRoots[len(badRoots)-1], hmplRootBad)
 	badPartials = append(badRoots, tdir+"/badPartials.hmpl")
 	createFile(badPartials[len(badPartials)-1], hmplPartialBad)
-	
+
 	goodRoots = append(goodRoots, tdir+"/goodRoot.mst")
 	createFile(goodRoots[len(goodRoots)-1], mstRootGood)
 	goodPartials = append(goodPartials, tdir+"/goodPartial.mst")
@@ -159,7 +159,7 @@ func TestLoadTemplateFilepath(t *testing.T) {
 	createFile(badRoots[len(badRoots)-1], mstRootBad)
 	badPartials = append(badRoots, tdir+"/badPartials.mst")
 	createFile(badPartials[len(badPartials)-1], mstPartialBad)
-	
+
 	for i, root := range goodRoots { // good root, good partials
 		if template, e := LoadTemplateFilepath(root, goodPartials[i]); e != nil {
 			t.Fatal(e)
@@ -195,44 +195,44 @@ func TestLoadTemplateString(t *testing.T) {
 	templateType = "tmpl"
 	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
-			t.Fatalf("'%s' template failed to load", templateType)
-		}
+		t.Fatalf("'%s' template failed to load", templateType)
+	}
 	if template, err = LoadTemplateString(templateType, name, tmplRootBad,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err == nil {
-			testInvalid(templateType, template)
-		}
+		testInvalid(templateType, template)
+	}
 	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialBad}); err == nil {
-			testInvalid(templateType, template)
-		}
+		testInvalid(templateType, template)
+	}
 
 	templateType = "hmpl"
 	if template, err = LoadTemplateString(templateType, name, hmplRootGood,
 		map[string]string{"hmplPartialGood": hmplPartialGood}); err != nil {
-			t.Fatalf("'%s' template failed to load", templateType)
-		}
+		t.Fatalf("'%s' template failed to load", templateType)
+	}
 	if template, err = LoadTemplateString(templateType, name, hmplRootBad,
 		map[string]string{"hmplPartialGood": hmplPartialGood}); err == nil {
-			testInvalid(templateType, template)
-		}
+		testInvalid(templateType, template)
+	}
 	if template, err = LoadTemplateString(templateType, name, hmplRootGood,
 		map[string]string{"hmplPartialGood": hmplPartialBad}); err == nil {
-			testInvalid(templateType, template)
-		}
+		testInvalid(templateType, template)
+	}
 
 	templateType = "mst"
 	if template, err = LoadTemplateString(templateType, name, mstRootGood,
 		map[string]string{"mstPartialGood": mstPartialGood}); err != nil {
-			t.Fatalf("'%s' template failed to load", templateType)
-		}
+		t.Fatalf("'%s' template failed to load", templateType)
+	}
 	if template, err = LoadTemplateString(templateType, name, mstRootBad,
 		map[string]string{"mstPartialGood": mstPartialGood}); err == nil {
-			testInvalid(templateType, template)
-		}
+		testInvalid(templateType, template)
+	}
 	if template, err = LoadTemplateString(templateType, name, mstRootGood,
 		map[string]string{"mstPartialGood": mstPartialBad}); err == nil {
-			testInvalid(templateType, template)
-		}
+		testInvalid(templateType, template)
+	}
 }
 
 // func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFilepath and TestLoadTemplateString
@@ -255,8 +255,8 @@ func TestExecute(t *testing.T) {
 
 	if tmpl, err = LoadTemplateString("tmpl", "tmplRootGood", tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
-			t.Skip("setup failure:", err)
-		}
+		t.Skip("setup failure:", err)
+	}
 	if err = LoadData("json", strings.NewReader(good["json"]), &data); err != nil {
 		t.Skip("setup failure:", err)
 	}
@@ -265,8 +265,8 @@ func TestExecute(t *testing.T) {
 
 	if tmpl, err = LoadTemplateString("hmpl", "hmplRootGood", hmplRootGood,
 		map[string]string{"hmplPartialGood": hmplPartialGood}); err != nil {
-			t.Skip("setup failure:", err)
-		}
+		t.Skip("setup failure:", err)
+	}
 	if err = LoadData("yaml", strings.NewReader(good["yaml"]), &data); err != nil {
 		t.Skip("setup failure:", err)
 	}
@@ -275,8 +275,8 @@ func TestExecute(t *testing.T) {
 
 	if tmpl, err = LoadTemplateString("mst", "mstRootGood", mstRootGood,
 		map[string]string{"mstPartialGood": mstPartialGood}); err != nil {
-			t.Skip("setup failure:", err)
-		}
+		t.Skip("setup failure:", err)
+	}
 	if err = LoadData("toml", strings.NewReader(good["toml"]), &data); err != nil {
 		t.Skip("setup failure:", err)
 	}
