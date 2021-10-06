@@ -152,6 +152,68 @@ func LoadTemplateString(lang string, rootName string, root string, partials map[
 	return LoadTemplate(lang, rootName, strings.NewReader(root), p)
 }
 
+func loadTemplateTmpl(rootName string, root io.Reader, partials map[string]io.Reader) (*tmpl.Template, error) {
+	var template *tmpl.Template
+
+	if buf, err := io.ReadAll(root); err != nil {
+		return nil, err
+	} else if template, err = tmpl.New(rootName).Parse(string(buf)); err != nil {
+		return nil, err
+	}
+
+	for name, partial  := range partials {
+		if buf, err := io.ReadAll(partial); err != nil {
+			return nil, err
+		} else if _, err = template.New(name).Parse(string(buf)); err != nil {
+			return nil, err
+		}
+	}
+
+	return template, nil
+}
+
+func loadTemplateHmpl(rootName string, root io.Reader, partials map[string]io.Reader) (*hmpl.Template, error) {
+	var template *hmpl.Template
+
+	if buf, err := io.ReadAll(root); err != nil {
+		return nil, err
+	} else if template, err = hmpl.New(rootName).Parse(string(buf)); err != nil {
+		return nil, err
+	}
+
+	for name, partial  := range partials {
+		if buf, err := io.ReadAll(partial); err != nil {
+			return nil, err
+		} else if _, err = template.New(name).Parse(string(buf)); err != nil {
+			return nil, err
+		}
+	}
+
+	return template, nil
+}
+
+func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Reader) (*mst.Template, error) {
+		var template *mst.Template
+
+		mstpp := new(mst.StaticProvider)
+		mstpp.Partials = make(map[string]string)
+		for name, partial := range partials {
+			if buf, err := io.ReadAll(partial); err != nil {
+				return nil, err
+			} else {
+				mstpp.Partials[name] = string(buf)
+			}
+		}
+
+		if buf, err := io.ReadAll(root); err != nil {
+			return nil, err
+		} else if template, err = mst.ParseStringPartials(string(buf), mstpp); err != nil {
+			return nil, err
+		}
+
+		return template, nil
+}
+
 // LoadTemplate loads a Template from `root` of type `lang`, named
 // `name`. `lang` must be an element in `SupportedTemplateLangs`.
 // `name` is optional, if empty the template name will be "template".
@@ -164,62 +226,17 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 		return
 	}
 
-	var buf []byte
 	switch lang {
 	case "tmpl":
-		var template *tmpl.Template
-		if buf, e = io.ReadAll(root); e != nil {
-			break
-		}
-		if template, e = tmpl.New(rootName).Parse(string(buf)); e != nil {
-			break
-		}
-		for name, p := range partials {
-			if buf, e = io.ReadAll(p); e != nil {
-				break
-			}
-			if _, e = template.New(name).Parse(string(buf)); e != nil {
-				break
-			}
-		}
-		t.T = template
+		t.T, e = loadTemplateTmpl(rootName, root, partials)
 	case "hmpl":
-		var template *hmpl.Template
-		if buf, e = io.ReadAll(root); e != nil {
-			break
-		}
-		if template, e = hmpl.New(rootName).Parse(string(buf)); e != nil {
-			break
-		}
-		for name, p := range partials {
-			if buf, e = io.ReadAll(p); e != nil {
-				break
-			}
-			if _, e = template.New(name).Parse(string(buf)); e != nil {
-				break
-			}
-		}
-		t.T = template
+		t.T, e = loadTemplateHmpl(rootName, root, partials)
 	case "mst":
-		var template *mst.Template
-		mstpp := new(mst.StaticProvider)
-		mstpp.Partials = make(map[string]string)
-		for name, partial := range partials {
-			if buf, e = io.ReadAll(partial); e != nil {
-				break
-			}
-			mstpp.Partials[name] = string(buf)
-		}
-		if e == nil {
-			if buf, e = io.ReadAll(root); e != nil {
-				break
-			}
-			template, e = mst.ParseStringPartials(string(buf), mstpp)
-			t.T = template
-		}
+		t.T, e = loadTemplateMst(rootName, root, partials)
 	default:
 		e = fmt.Errorf("'%s' is not a supported template language", lang)
 	}
 
 	return
 }
+
