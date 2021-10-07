@@ -106,10 +106,7 @@ func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, 
 
 	lang := strings.TrimPrefix(filepath.Ext(rootPath), ".")
 
-	rootName := filepath.Base(rootPath)
-	if lang == "mst" {
-		rootName = strings.TrimSuffix(rootName, filepath.Ext(rootName))
-	}
+	rootName := strings.TrimSuffix(filepath.Base(rootPath), filepath.Ext(rootPath))
 
 	var root *os.File
 	if root, e = os.Open(rootPath); e != nil {
@@ -124,12 +121,11 @@ func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, 
 			name = strings.TrimSuffix(name, filepath.Ext(name))
 		}
 
-		var p *os.File
 		if stat, e = os.Stat(path); e != nil {
 			return
-		} else if stat.IsDir() {
 		}
 
+		var p *os.File
 		if p, e = os.Open(path); e != nil {
 			return
 		}
@@ -226,6 +222,7 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 		return
 	}
 
+	t.Name = rootName
 	switch lang {
 	case "tmpl":
 		t.T, e = loadTemplateTmpl(rootName, root, partials)
