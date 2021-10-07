@@ -97,7 +97,7 @@ func sortFileListByMod(direction string, paths []string) ([]string, error) {
 		}
 	}
 	if len(sorted) != len(paths) {
-		fmt.Errorf("sorted length invalid")
+		return nil, fmt.Errorf("sorted length invalid")
 	}
 
 	return sorted, nil

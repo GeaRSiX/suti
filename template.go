@@ -157,7 +157,7 @@ func loadTemplateTmpl(rootName string, root io.Reader, partials map[string]io.Re
 		return nil, err
 	}
 
-	for name, partial  := range partials {
+	for name, partial := range partials {
 		if buf, err := io.ReadAll(partial); err != nil {
 			return nil, err
 		} else if _, err = template.New(name).Parse(string(buf)); err != nil {
@@ -177,7 +177,7 @@ func loadTemplateHmpl(rootName string, root io.Reader, partials map[string]io.Re
 		return nil, err
 	}
 
-	for name, partial  := range partials {
+	for name, partial := range partials {
 		if buf, err := io.ReadAll(partial); err != nil {
 			return nil, err
 		} else if _, err = template.New(name).Parse(string(buf)); err != nil {
@@ -189,25 +189,25 @@ func loadTemplateHmpl(rootName string, root io.Reader, partials map[string]io.Re
 }
 
 func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Reader) (*mst.Template, error) {
-		var template *mst.Template
+	var template *mst.Template
 
-		mstpp := new(mst.StaticProvider)
-		mstpp.Partials = make(map[string]string)
-		for name, partial := range partials {
-			if buf, err := io.ReadAll(partial); err != nil {
-				return nil, err
-			} else {
-				mstpp.Partials[name] = string(buf)
-			}
-		}
-
-		if buf, err := io.ReadAll(root); err != nil {
+	mstpp := new(mst.StaticProvider)
+	mstpp.Partials = make(map[string]string)
+	for name, partial := range partials {
+		if buf, err := io.ReadAll(partial); err != nil {
 			return nil, err
-		} else if template, err = mst.ParseStringPartials(string(buf), mstpp); err != nil {
-			return nil, err
+		} else {
+			mstpp.Partials[name] = string(buf)
 		}
+	}
 
-		return template, nil
+	if buf, err := io.ReadAll(root); err != nil {
+		return nil, err
+	} else if template, err = mst.ParseStringPartials(string(buf), mstpp); err != nil {
+		return nil, err
+	}
+
+	return template, nil
 }
 
 // LoadTemplate loads a Template from `root` of type `lang`, named
@@ -236,4 +236,3 @@ func LoadTemplate(lang string, rootName string, root io.Reader, partials map[str
 
 	return
 }
-

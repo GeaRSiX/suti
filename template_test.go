@@ -193,15 +193,15 @@ func TestLoadTemplateString(t *testing.T) {
 
 	name := "test"
 	templateType = "tmpl"
-	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
+	if _, err = LoadTemplateString(templateType, name, tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
 		t.Fatalf("'%s' template failed to load", templateType)
 	}
-	if template, err = LoadTemplateString(templateType, name, tmplRootBad,
+	if _, err = LoadTemplateString(templateType, name, tmplRootBad,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err == nil {
 		testInvalid(templateType, template)
 	}
-	if template, err = LoadTemplateString(templateType, name, tmplRootGood,
+	if _, err = LoadTemplateString(templateType, name, tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialBad}); err == nil {
 		testInvalid(templateType, template)
 	}

@@ -1,10 +1,18 @@
 # CHANGELOG
 
-## v0.3.0
+## v0.7.0
 
-- added LoadTemplate, loads templates from io.Reader params, template language and name must be specified.
-This function is the template.go counterpart to data.go#LoadData
+- added LoadTemplate, loads templates from io.Reader params.
+  - Template language and name must be specified.
+  - This function is the template.go counterpart to data.go#LoadData
 - added LoadTemplateStrings loads templates from string params (calls LoadTemplate)
+- renamed LoadTemplateFile -> LoadTemplateFilepath
+- added []SupportedTemplateLangs, IsSupportedTemplateLang(), []SupportedDataLangs, IsSupportedDataLang()
+- renamed suti.Template.Source -> suti.Template.Name
+  - The .Name value assigned to templates when LoadTemplateFilpath() is called will
+  be the **base name minus the file extension**.
+- Lots of refactors to tidyup, improve consistency & error handling/catches
+- Testing is all upto date :)
 
 ## v0.2.2
 
