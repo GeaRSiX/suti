@@ -10,7 +10,7 @@ import (
 
 func TestSortFileList(t *testing.T) {
 	var err error
-	tdir := t.TempDir()
+	tdir := os.TempDir()
 	paths := []string{tdir + "/1", tdir + "/3", tdir + "/2"}
 	var sorted []string
 

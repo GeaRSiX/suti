@@ -21,7 +21,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/fs"
 	"notabug.org/gearsix/suti"
 	"os"
 	"path/filepath"
@@ -267,7 +266,7 @@ func loadFilePaths(paths ...string) (filepaths []string) {
 			}
 		} else {
 			err = filepath.Walk(path,
-				func(p string, info fs.FileInfo, e error) error {
+				func(p string, info os.FileInfo, e error) error {
 					if e == nil && !info.IsDir() {
 						filepaths = append(filepaths, p)
 					}

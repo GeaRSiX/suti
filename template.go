@@ -23,6 +23,7 @@ import (
 	mst "github.com/cbroglie/mustache"
 	hmpl "html/template"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -151,14 +152,14 @@ func LoadTemplateString(lang string, rootName string, root string, partials map[
 func loadTemplateTmpl(rootName string, root io.Reader, partials map[string]io.Reader) (*tmpl.Template, error) {
 	var template *tmpl.Template
 
-	if buf, err := io.ReadAll(root); err != nil {
+	if buf, err := ioutil.ReadAll(root); err != nil {
 		return nil, err
 	} else if template, err = tmpl.New(rootName).Parse(string(buf)); err != nil {
 		return nil, err
 	}
 
 	for name, partial := range partials {
-		if buf, err := io.ReadAll(partial); err != nil {
+		if buf, err := ioutil.ReadAll(partial); err != nil {
 			return nil, err
 		} else if _, err = template.New(name).Parse(string(buf)); err != nil {
 			return nil, err
@@ -171,14 +172,14 @@ func loadTemplateTmpl(rootName string, root io.Reader, partials map[string]io.Re
 func loadTemplateHmpl(rootName string, root io.Reader, partials map[string]io.Reader) (*hmpl.Template, error) {
 	var template *hmpl.Template
 
-	if buf, err := io.ReadAll(root); err != nil {
+	if buf, err := ioutil.ReadAll(root); err != nil {
 		return nil, err
 	} else if template, err = hmpl.New(rootName).Parse(string(buf)); err != nil {
 		return nil, err
 	}
 
 	for name, partial := range partials {
-		if buf, err := io.ReadAll(partial); err != nil {
+		if buf, err := ioutil.ReadAll(partial); err != nil {
 			return nil, err
 		} else if _, err = template.New(name).Parse(string(buf)); err != nil {
 			return nil, err
@@ -194,14 +195,14 @@ func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Rea
 	mstpp := new(mst.StaticProvider)
 	mstpp.Partials = make(map[string]string)
 	for name, partial := range partials {
-		if buf, err := io.ReadAll(partial); err != nil {
+		if buf, err := ioutil.ReadAll(partial); err != nil {
 			return nil, err
 		} else {
 			mstpp.Partials[name] = string(buf)
 		}
 	}
 
-	if buf, err := io.ReadAll(root); err != nil {
+	if buf, err := ioutil.ReadAll(root); err != nil {
 		return nil, err
 	} else if template, err = mst.ParseStringPartials(string(buf), mstpp); err != nil {
 		return nil, err

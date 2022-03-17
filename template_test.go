@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import (
 	"bytes"
 	"os"
+	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -124,11 +125,11 @@ func validateTemplateFile(t *testing.T, template Template, rootPath string, part
 func TestLoadTemplateFilepath(t *testing.T) {
 	t.Parallel()
 
-	tdir := t.TempDir()
+	tdir := os.TempDir()
 	var goodRoots, goodPartials, badRoots, badPartials []string
 
 	createFile := func(path string, data string) {
-		if err := os.WriteFile(path, []byte(data), 0666); err != nil {
+		if err := ioutil.WriteFile(path, []byte(data), 0666); err != nil {
 			t.Error(err)
 		}
 	}

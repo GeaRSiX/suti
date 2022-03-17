@@ -130,7 +130,7 @@ func TestLoadDataFilepath(t *testing.T) {
 	var d interface{}
 	var e error
 	var p string
-	tdir := t.TempDir()
+	tdir := os.TempDir()
 
 	for lang, data := range good {
 		p = tdir + "/good." + lang

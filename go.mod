@@ -1,6 +1,6 @@
 module notabug.org/gearsix/suti
 
-go 1.16
+go 1.13
 
 require (
 	github.com/cbroglie/mustache v1.2.0
