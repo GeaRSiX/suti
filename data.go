@@ -1,4 +1,4 @@
-package suti
+package dati
 
 /*
 Copyright (C) 2021 gearsix <gearsix@tuta.io>

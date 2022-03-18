@@ -1,4 +1,4 @@
-module notabug.org/gearsix/suti
+module notabug.org/gearsix/dati
 
 go 1.13
 

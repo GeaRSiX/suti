@@ -21,7 +21,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"notabug.org/gearsix/suti"
+	"notabug.org/gearsix/dati"
 	"os"
 	"path/filepath"
 	"strings"
@@ -89,33 +89,33 @@ func main() {
 	var err error
 	var global Data
 	var data []Data
-	var template suti.Template
+	var template dati.Template
 	var out bytes.Buffer
 
 	opts.GlobalDataPaths = loadFilePaths(opts.GlobalDataPaths...)
 	for _, path := range opts.GlobalDataPaths {
 		var d Data
-		err = suti.LoadDataFilepath(path, &d)
+		err = dati.LoadDataFilepath(path, &d)
 		assert(err, "failed to load global data '%s'", path)
 		data = append(data, d)
 	}
 	global = mergeData(data)
 
 	opts.DataPaths = loadFilePaths(opts.DataPaths...)
-	opts.DataPaths, err = suti.SortFileList(opts.DataPaths, opts.SortData)
+	opts.DataPaths, err = dati.SortFileList(opts.DataPaths, opts.SortData)
 	if err != nil {
 		warn(err, "failed to sort data files")
 	}
 	data = make([]Data, 0)
 	for _, path := range opts.DataPaths {
 		var d Data
-		err = suti.LoadDataFilepath(path, &d)
+		err = dati.LoadDataFilepath(path, &d)
 		assert(err, "failed to load data '%s'", path)
 		data = append(data, d)
 	}
 	global[opts.DataKey] = data
 
-	template, err = suti.LoadTemplateFilepath(opts.RootPath, opts.PartialPaths...)
+	template, err = dati.LoadTemplateFilepath(opts.RootPath, opts.PartialPaths...)
 	assert(err, "unable to load templates")
 
 	out, err = template.Execute(global)
@@ -126,7 +126,7 @@ func main() {
 }
 
 func help() {
-	fmt.Print("Usage: suti [OPTIONS]\n\n")
+	fmt.Print("Usage: dati [OPTIONS]\n\n")
 
 	fmt.Print("Options")
 	fmt.Print(`
@@ -162,7 +162,7 @@ func help() {
 
 `)
 
-	fmt.Println("See doc/suti.txt for further details")
+	fmt.Println("See doc/dati.txt for further details")
 }
 
 // custom arg parser because golang.org/pkg/flag doesn't support list args

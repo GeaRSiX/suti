@@ -1,4 +1,4 @@
-package suti
+package dati
 
 import (
 	"os"

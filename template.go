@@ -1,4 +1,4 @@
-package suti
+package dati
 
 /*
 Copyright (C) 2021 gearsix <gearsix@tuta.io>
@@ -54,7 +54,7 @@ func getTemplateType(path string) string {
 	return strings.TrimPrefix(filepath.Ext(path), ".")
 }
 
-// Template is a wrapper to interface with any template parsed by suti.
+// Template is a wrapper to interface with any template parsed by dati.
 // Ideally it would have just been an interface{} that defines Execute but
 // the libaries being used aren't that uniform.
 type Template struct {
