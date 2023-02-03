@@ -88,15 +88,13 @@ func LoadData(format string, in io.Reader, outp interface{}) error {
 		return nil
 	}
 
-	switch IsSupportedDataLang(format) {
-	case 0:
+	switch ReadDataFormat(format) {
+	case JSON:
 		e = json.Unmarshal(inbuf, outp)
-	case 1:
+	case YAML:
 		e = yaml.Unmarshal(inbuf, outp)
-	case 2:
+	case TOML:
 		e = toml.Unmarshal(inbuf, outp)
-	case -1:
-		fallthrough
 	default:
 		e = fmt.Errorf("'%s' is not a supported data language", format)
 	}

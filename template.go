@@ -253,18 +253,14 @@ func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Rea
 // `lang`. `partials` should be a string of template, with syntax
 // matching that of `lang`.
 func LoadTemplate(lang string, rootName string, root io.Reader, partials map[string]io.Reader) (t Template, e error) {
-	if IsSupportedTemplateLang(lang) == -1 {
-		e = fmt.Errorf("invalid type '%s'", lang)
-		return
-	}
-
 	t.Name = rootName
-	switch lang {
-	case "tmpl":
+	
+	switch SupportedTemplateFormat(lang) {
+	case TMPL:
 		t.T, e = loadTemplateTmpl(rootName, root, partials)
-	case "hmpl":
+	case HMPL:
 		t.T, e = loadTemplateHmpl(rootName, root, partials)
-	case "mst":
+	case MST:
 		t.T, e = loadTemplateMst(rootName, root, partials)
 	default:
 		e = fmt.Errorf("'%s' is not a supported template language", lang)
