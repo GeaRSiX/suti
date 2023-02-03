@@ -93,10 +93,15 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	return
 }
 
+// **DEPRECIATED** please use LoadTemplateFile
+func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, e error) {
+	return LoadTemplateFile(rootPath, partialPaths...)
+}
+
 // LoadTemplateFilepath loads a Template from file `root`. All files in `partials`
 // that have the same template type (identified by file extension) are also
 // parsed and associated with the parsed root template.
-func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, e error) {
+func LoadTemplateFile(rootPath string, partialPaths ...string) (t Template, e error) {
 	var stat os.FileInfo
 	if stat, e = os.Stat(rootPath); e != nil {
 		return

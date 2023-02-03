@@ -123,6 +123,10 @@ func validateTemplateFile(t *testing.T, template Template, rootPath string, part
 }
 
 func TestLoadTemplateFilepath(t *testing.T) {
+	TestLoadTemplateFile(t)
+}
+
+func TestLoadTemplateFile(t *testing.T) {
 	t.Parallel()
 
 	tdir := os.TempDir()
