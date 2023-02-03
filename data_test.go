@@ -65,7 +65,7 @@ func TestReadDataFormat(t *testing.T) {
 	}
 
 	for i, ext := range exts {
-		var target SupportedDataFormat
+		var target DataFormat
 		
 		if i < 4 {
 			target = JSON

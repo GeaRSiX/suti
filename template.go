@@ -31,20 +31,20 @@ import (
 	tmpl "text/template"
 )
 
-// SupportedTemplateFormat provides a list of supported languages for
+// TemplateLanguage provides a list of supported languages for
 // Template files (lower-case)
-type SupportedTemplateFormat string
+type TemplateLanguage string
 
 const (
-	TMPL SupportedTemplateFormat = "tmpl"
-	HMPL SupportedTemplateFormat = "hmpl"
-	MST  SupportedTemplateFormat = "mst"
+	TMPL TemplateLanguage = "tmpl"
+	HMPL TemplateLanguage = "hmpl"
+	MST  TemplateLanguage = "mst"
 )
 
-// ReadTemplateFormat returns the *SupportedTemplateFormat* that the file
+// ReadTemplateFormat returns the *TemplateLanguage* that the file
 // extension of `path` matches. If the file extension of `path` does
-// not match any *SupportedTemplateFormat*, then an "" is returned.
-func ReadTemplateFormat(path string) SupportedTemplateFormat {
+// not match any *TemplateLanguage*, then an "" is returned.
+func ReadTemplateFormat(path string) TemplateLanguage {
 	if len(path) == 0 {
 		return ""
 	}
@@ -55,7 +55,7 @@ func ReadTemplateFormat(path string) SupportedTemplateFormat {
 		ext = ext[1:]
 	}
 
-	for _, fmt := range []SupportedTemplateFormat{TMPL, HMPL, MST} {
+	for _, fmt := range []TemplateLanguage{TMPL, HMPL, MST} {
 		if string(fmt) == ext {
 			return fmt
 		}
@@ -63,7 +63,7 @@ func ReadTemplateFormat(path string) SupportedTemplateFormat {
 	return ""
 }
 
-// **DEPRECIATED** please use SupportedTemplateFormat
+// **DEPRECIATED** please use TemplateLanguage
 var SupportedTemplateLangs = []string{"tmpl", "hmpl", "mst"}
 
 // **DEPRECIATED** please use ReadTemplateFormat
@@ -255,7 +255,7 @@ func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Rea
 func LoadTemplate(lang string, rootName string, root io.Reader, partials map[string]io.Reader) (t Template, e error) {
 	t.Name = rootName
 	
-	switch SupportedTemplateFormat(lang) {
+	switch TemplateLanguage(lang) {
 	case TMPL:
 		t.T, e = loadTemplateTmpl(rootName, root, partials)
 	case HMPL:

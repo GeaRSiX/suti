@@ -29,20 +29,20 @@ import (
 	"strings"
 )
 
-// SupportedDataFormat provides a list of supported languages for
+// DataFormat provides a list of supported languages for
 // data files (lower-case)
-type SupportedDataFormat string
+type DataFormat string
 
 const (
-	JSON SupportedDataFormat = "json"
-	YAML SupportedDataFormat = "yaml"
-	TOML SupportedDataFormat = "toml"
+	JSON DataFormat = "json"
+	YAML DataFormat = "yaml"
+	TOML DataFormat = "toml"
 )
 
-// ReadDataFormat returns the *SupportedDataFormat* that the file
+// ReadDataFormat returns the *DataFormat* that the file
 // extension of `path` matches. If the file extension of `path` does
-// not match any *SupportedDataFormat*, then an "" is returned.
-func ReadDataFormat(path string) SupportedDataFormat {
+// not match any *DataFormat*, then an "" is returned.
+func ReadDataFormat(path string) DataFormat {
 	if len(path) == 0 {
 		return ""
 	}
@@ -53,7 +53,7 @@ func ReadDataFormat(path string) SupportedDataFormat {
 		ext = ext[1:]
 	}
 
-	for _, fmt := range []SupportedDataFormat{JSON, YAML, TOML} {
+	for _, fmt := range []DataFormat{JSON, YAML, TOML} {
 		if string(fmt) == ext {
 			return fmt
 		}
@@ -70,7 +70,7 @@ func IsSupportedDataLang(lang string) int {
 	if len(lang) > 0 && lang[0] == '.' {
 		lang = lang[1:]
 	}
-	for i, l := range []SupportedDataFormat{JSON, YAML, TOML} {
+	for i, l := range []DataFormat{JSON, YAML, TOML} {
 		if lang == string(l) {
 			return i
 		}

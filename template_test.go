@@ -84,7 +84,7 @@ func TestReadTemplateFormat(t *testing.T) {
 	}
 
 	for i, ext := range exts {
-		var target SupportedTemplateFormat
+		var target TemplateLanguage
 		if i < 4 {
 			target = TMPL
 		} else if i < 8 {
