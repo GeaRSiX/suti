@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import (
 	"bytes"
-	"os"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -45,37 +45,7 @@ const mstResult = `0 0`
 const mstRootBad = `{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}`
 const mstPartialBad = `p{{$}}{{ > noexist}`
 
-func TestIsSupportedTemplateLang(t *testing.T) {
-	exts := []string{
-		".tmpl", "tmpl", "TMPL", ".TMPL",
-		".hmpl", "hmpl", "HMPL", ".HMPL",
-		".mst", "mst", "MST", ".MST",
-		".NONE", "-", ".", "",
-	}
-
-	for i, ext := range exts {
-		var target int
-		if i < 4 {
-			target = 0
-		} else if i < 8 {
-			target = 1
-		} else if i < 12 {
-			target = 2
-		} else {
-			target = -1
-		}
-
-		if IsSupportedTemplateLang(ext) != target {
-			if target == -1 {
-				t.Fatalf("%s is not a supported data language", ext)
-			} else {
-				t.Fatalf("%s did not return %s", ext, SupportedTemplateLangs[target])
-			}
-		}
-	}
-}
-
-func TestReadTemplateFormat(t *testing.T) {
+func TestReadTemplateLanguage(t *testing.T) {
 	exts := []string{
 		".tmpl", "tmpl", "TMPL", ".TMPL",
 		".hmpl", "hmpl", "HMPL", ".HMPL",
@@ -95,7 +65,7 @@ func TestReadTemplateFormat(t *testing.T) {
 			target = ""
 		}
 
-		if ReadTemplateFormat(ext) != target {
+		if ReadTemplateLangauge(ext) != target {
 			if target == "" {
 				t.Fatalf("%s is not a supported data language", ext)
 			} else {
@@ -152,10 +122,6 @@ func validateTemplateFile(t *testing.T, template Template, rootPath string, part
 	validateTemplate(t, template, rType, rName, pNames...)
 }
 
-func TestLoadTemplateFilepath(t *testing.T) {
-	TestLoadTemplateFile(t)
-}
-
 func TestLoadTemplateFile(t *testing.T) {
 	t.Parallel()
 
@@ -196,19 +162,19 @@ func TestLoadTemplateFile(t *testing.T) {
 	createFile(badPartials[len(badPartials)-1], mstPartialBad)
 
 	for i, root := range goodRoots { // good root, good partials
-		if template, e := LoadTemplateFilepath(root, goodPartials[i]); e != nil {
+		if template, e := LoadTemplateFile(root, goodPartials[i]); e != nil {
 			t.Fatal(e)
 		} else {
 			validateTemplateFile(t, template, root, goodPartials[i])
 		}
 	}
 	for i, root := range badRoots { // bad root, good partials
-		if _, e := LoadTemplateFilepath(root, goodPartials[i]); e == nil {
+		if _, e := LoadTemplateFile(root, goodPartials[i]); e == nil {
 			t.Fatalf("no error for bad template with good partials\n")
 		}
 	}
 	for i, root := range badRoots { // bad root, bad partials
-		if _, e := LoadTemplateFilepath(root, badPartials[i]); e == nil {
+		if _, e := LoadTemplateFile(root, badPartials[i]); e == nil {
 			t.Fatalf("no error for bad template with bad partials\n")
 		}
 	}
@@ -217,9 +183,9 @@ func TestLoadTemplateFile(t *testing.T) {
 func TestLoadTemplateString(t *testing.T) {
 	var err error
 	var template Template
-	var templateType string
+	var templateType TemplateLanguage
 
-	testInvalid := func(templateType string, template Template) {
+	testInvalid := func(templateType TemplateLanguage, template Template) {
 		t.Logf("invalid '%s' template managed to load", templateType)
 		if buf, err := template.Execute(""); err == nil {
 			t.Fatalf("invalid '%s' template managed to execute: %s", templateType, buf.String())
@@ -227,7 +193,7 @@ func TestLoadTemplateString(t *testing.T) {
 	}
 
 	name := "test"
-	templateType = "tmpl"
+	templateType = TMPL
 	if _, err = LoadTemplateString(templateType, name, tmplRootGood,
 		map[string]string{"tmplPartialGood": tmplPartialGood}); err != nil {
 		t.Fatalf("'%s' template failed to load", templateType)
@@ -270,7 +236,7 @@ func TestLoadTemplateString(t *testing.T) {
 	}
 }
 
-// func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFilepath and TestLoadTemplateString
+// func TestLoadTemplateString(t *testing.T) {} // This is tested by TestLoadTemplateFile and TestLoadTemplateString
 
 func validateExecute(t *testing.T, results string, expect string, e error) {
 	if e != nil {

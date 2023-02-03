@@ -26,36 +26,6 @@ import (
 	"testing"
 )
 
-func TestIsSupportedDataLang(t *testing.T) {
-	exts := []string{
-		".json", "json", "JSON", ".JSON",
-		".yaml", "yaml", "YAML", ".YAML",
-		".toml", "toml", "TOML", ".TOML",
-		".misc", "-", ".", "",
-	}
-
-	for i, ext := range exts {
-		var target int
-		if i < 4 {
-			target = 0
-		} else if i < 8 {
-			target = 1
-		} else if i < 12 {
-			target = 2
-		} else {
-			target = -1
-		}
-
-		if IsSupportedDataLang(ext) != target {
-			if target == -1 {
-				t.Fatalf("%s is not a supported data language", ext)
-			} else {
-				t.Fatalf("%s did not return %s", ext, SupportedDataLangs[target])
-			}
-		}
-	}
-}
-
 func TestReadDataFormat(t *testing.T) {
 	exts := []string{
 		".json", "json", "JSON", ".JSON",
@@ -66,7 +36,7 @@ func TestReadDataFormat(t *testing.T) {
 
 	for i, ext := range exts {
 		var target DataFormat
-		
+
 		if i < 4 {
 			target = JSON
 		} else if i < 8 {
@@ -75,21 +45,22 @@ func TestReadDataFormat(t *testing.T) {
 			target = TOML
 		}
 
-		if ReadDataFormat(ext) != target {
+		fmt := ReadDataFormat(ext)
+		if fmt != target {
 			if target == "" {
-				t.Fatalf("%s is not a supported data language", ext)
+				t.Fatalf("%s is not a supported data language", fmt)
 			} else {
-				t.Fatalf("%s did not return %s", ext, target)
+				t.Fatalf("%s did not return %s", fmt, target)
 			}
 		}
 	}
 }
 
-var good = map[string]string{
-	"json": `{"eg":0}`,
-	"yaml": `eg: 0
+var good = map[DataFormat]string{
+	JSON: `{"eg":0}`,
+	YAML: `eg: 0
 `,
-	"toml": `eg = 0
+	TOML: `eg = 0
 `,
 }
 
@@ -109,7 +80,7 @@ func writeTestFile(t *testing.T, path string, Data string) {
 	return
 }
 
-func validateData(t *testing.T, d interface{}, e error, lang string) {
+func validateData(t *testing.T, d interface{}, e error, lang DataFormat) {
 	var b []byte
 
 	if e != nil {
@@ -117,11 +88,11 @@ func validateData(t *testing.T, d interface{}, e error, lang string) {
 	}
 
 	switch lang {
-	case "json":
+	case JSON:
 		b, e = json.Marshal(d)
-	case "yaml":
+	case YAML:
 		b, e = yaml.Marshal(d)
-	case "toml":
+	case TOML:
 		b, e = toml.Marshal(d)
 	}
 
@@ -142,21 +113,17 @@ func TestLoadData(t *testing.T) {
 		validateData(t, d, e, lang)
 	}
 
-	if e = LoadData("json", strings.NewReader(badData), &d); e == nil {
+	if e = LoadData(JSON, strings.NewReader(badData), &d); e == nil {
 		t.Fatalf("bad data passed")
 	}
-	if e = LoadData("toml", strings.NewReader(""), &d); e != nil {
+	if e = LoadData(TOML, strings.NewReader(""), &d); e != nil {
 		t.Fatalf("empty data failed %s, %s", d, e)
 	}
-	if e = LoadData("void", strings.NewReader("shouldn't pass"), &d); e == nil {
+	if e = LoadData("", strings.NewReader("shouldn't pass"), &d); e == nil {
 		t.Fatalf("invalid data language passed")
 	}
 
 	return
-}
-
-func TestLoadDataFilepath(t *testing.T) {
-	TestLoadDataFile(t)
 }
 
 func TestLoadDataFile(t *testing.T) {
@@ -166,27 +133,27 @@ func TestLoadDataFile(t *testing.T) {
 	tdir := os.TempDir()
 
 	for lang, data := range good {
-		p = tdir + "/good." + lang
+		p = tdir + "/good." + string(lang)
 		writeTestFile(t, p, data)
-		e = LoadDataFilepath(p, &d)
+		e = LoadDataFile(p, &d)
 		validateData(t, d, e, lang)
 	}
 
 	p = tdir + "/bad.json"
 	writeTestFile(t, p, badData)
-	e = LoadDataFilepath(p, &d)
+	e = LoadDataFile(p, &d)
 	if e == nil {
 		t.Fatalf("bad data passed")
 	}
 
 	p = tdir + "/empty.json"
 	writeTestFile(t, p, "")
-	e = LoadDataFilepath(p, &d)
+	e = LoadDataFile(p, &d)
 	if e != nil {
 		t.Fatalf("empty file failed: %s", e)
 	}
 
-	if e = LoadDataFilepath("non-existing-file.toml", &d); e == nil {
+	if e = LoadDataFile("non-existing-file.toml", &d); e == nil {
 		t.Fatalf("non-existing file passed: %s, %s", d, e)
 	}
 

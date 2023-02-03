@@ -41,16 +41,20 @@ const (
 	MST  TemplateLanguage = "mst"
 )
 
-// ReadTemplateFormat returns the *TemplateLanguage* that the file
+// ReadTemplateLanguage returns the *TemplateLanguage* that the file
 // extension of `path` matches. If the file extension of `path` does
 // not match any *TemplateLanguage*, then an "" is returned.
-func ReadTemplateFormat(path string) TemplateLanguage {
+func ReadTemplateLangauge(path string) TemplateLanguage {
 	if len(path) == 0 {
 		return ""
 	}
 
 	ext := filepath.Ext(path)
-	ext = strings.ToLower(path)
+	if len(ext) == 0 {
+		ext = path // assume `path` the name of the format
+	}
+
+	ext = strings.ToLower(ext)
 	if len(ext) > 0 && ext[0] == '.' {
 		ext = ext[1:]
 	}
@@ -61,23 +65,6 @@ func ReadTemplateFormat(path string) TemplateLanguage {
 		}
 	}
 	return ""
-}
-
-// **DEPRECIATED** please use TemplateLanguage
-var SupportedTemplateLangs = []string{"tmpl", "hmpl", "mst"}
-
-// **DEPRECIATED** please use ReadTemplateFormat
-func IsSupportedTemplateLang(lang string) int {
-	lang = strings.ToLower(lang)
-	if len(lang) > 0 && lang[0] == '.' {
-		lang = lang[1:]
-	}
-	for i, l := range SupportedTemplateLangs {
-		if lang == l {
-			return i
-		}
-	}
-	return -1
 }
 
 func getTemplateType(path string) string {
@@ -123,11 +110,6 @@ func (t *Template) Execute(d interface{}) (result bytes.Buffer, err error) {
 	return
 }
 
-// **DEPRECIATED** please use LoadTemplateFile
-func LoadTemplateFilepath(rootPath string, partialPaths ...string) (t Template, e error) {
-	return LoadTemplateFile(rootPath, partialPaths...)
-}
-
 // LoadTemplateFilepath loads a Template from file `root`. All files in `partials`
 // that have the same template type (identified by file extension) are also
 // parsed and associated with the parsed root template.
@@ -140,7 +122,7 @@ func LoadTemplateFile(rootPath string, partialPaths ...string) (t Template, e er
 		return
 	}
 
-	lang := strings.TrimPrefix(filepath.Ext(rootPath), ".")
+	lang := ReadTemplateLangauge(rootPath)
 
 	rootName := strings.TrimSuffix(filepath.Base(rootPath), filepath.Ext(rootPath))
 
@@ -176,12 +158,35 @@ func LoadTemplateFile(rootPath string, partialPaths ...string) (t Template, e er
 // return a `LoadTemplate` call using them as parameters.
 // The `partials` map should have the template name to assign the partial template to in the
 // string key and the template data in as the value.
-func LoadTemplateString(lang string, rootName string, root string, partials map[string]string) (t Template, e error) {
+func LoadTemplateString(lang TemplateLanguage, rootName string, root string, partials map[string]string) (t Template, e error) {
 	p := make(map[string]io.Reader)
 	for name, partial := range partials {
 		p[name] = strings.NewReader(partial)
 	}
 	return LoadTemplate(lang, rootName, strings.NewReader(root), p)
+}
+
+// LoadTemplate loads a Template from `root` of type `lang`, named
+// `name`. `lang` must be an element in `SupportedTemplateLangs`.
+// `name` is optional, if empty the template name will be "template".
+// `root` should be a string of template, with syntax matching that of
+// `lang`. `partials` should be a string of template, with syntax
+// matching that of `lang`.
+func LoadTemplate(lang TemplateLanguage, rootName string, root io.Reader, partials map[string]io.Reader) (t Template, e error) {
+	t.Name = rootName
+
+	switch TemplateLanguage(lang) {
+	case TMPL:
+		t.T, e = loadTemplateTmpl(rootName, root, partials)
+	case HMPL:
+		t.T, e = loadTemplateHmpl(rootName, root, partials)
+	case MST:
+		t.T, e = loadTemplateMst(rootName, root, partials)
+	default:
+		e = fmt.Errorf("'%s' is not a supported template language", lang)
+	}
+
+	return
 }
 
 func loadTemplateTmpl(rootName string, root io.Reader, partials map[string]io.Reader) (*tmpl.Template, error) {
@@ -244,27 +249,4 @@ func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Rea
 	}
 
 	return template, nil
-}
-
-// LoadTemplate loads a Template from `root` of type `lang`, named
-// `name`. `lang` must be an element in `SupportedTemplateLangs`.
-// `name` is optional, if empty the template name will be "template".
-// `root` should be a string of template, with syntax matching that of
-// `lang`. `partials` should be a string of template, with syntax
-// matching that of `lang`.
-func LoadTemplate(lang string, rootName string, root io.Reader, partials map[string]io.Reader) (t Template, e error) {
-	t.Name = rootName
-	
-	switch TemplateLanguage(lang) {
-	case TMPL:
-		t.T, e = loadTemplateTmpl(rootName, root, partials)
-	case HMPL:
-		t.T, e = loadTemplateHmpl(rootName, root, partials)
-	case MST:
-		t.T, e = loadTemplateMst(rootName, root, partials)
-	default:
-		e = fmt.Errorf("'%s' is not a supported template language", lang)
-	}
-
-	return
 }

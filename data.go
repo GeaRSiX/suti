@@ -48,7 +48,11 @@ func ReadDataFormat(path string) DataFormat {
 	}
 
 	ext := filepath.Ext(path)
-	ext = strings.ToLower(path)
+	if len(ext) == 0 {
+		ext = path // assume `path` the name of the format
+	}
+
+	ext = strings.ToLower(ext)
 	if len(ext) > 0 && ext[0] == '.' {
 		ext = ext[1:]
 	}
@@ -61,26 +65,9 @@ func ReadDataFormat(path string) DataFormat {
 	return ""
 }
 
-// **DEPRECIATED** please use SupportedFormat
-var SupportedDataLangs = []string{"json", "yaml", "toml"}
-
-// **DEPRECIATED** please use ReadDataFormat
-func IsSupportedDataLang(lang string) int {
-	lang = strings.ToLower(lang)
-	if len(lang) > 0 && lang[0] == '.' {
-		lang = lang[1:]
-	}
-	for i, l := range []DataFormat{JSON, YAML, TOML} {
-		if lang == string(l) {
-			return i
-		}
-	}
-	return -1
-}
-
 // LoadData attempts to load all data from `in` as the data language `lang`
 // and writes the result in the pointer `outp`.
-func LoadData(format string, in io.Reader, outp interface{}) error {
+func LoadData(format DataFormat, in io.Reader, outp interface{}) error {
 	inbuf, e := ioutil.ReadAll(in)
 	if e != nil {
 		return e
@@ -88,7 +75,7 @@ func LoadData(format string, in io.Reader, outp interface{}) error {
 		return nil
 	}
 
-	switch ReadDataFormat(format) {
+	switch format {
 	case JSON:
 		e = json.Unmarshal(inbuf, outp)
 	case YAML:
@@ -110,16 +97,10 @@ func LoadDataFile(path string, outp interface{}) error {
 	defer f.Close()
 
 	if e == nil {
-		lang := filepath.Ext(path)[1:] // don't include '.'
-		if e = LoadData(lang, f, outp); e != nil {
+		if e = LoadData(ReadDataFormat(path), f, outp); e != nil {
 			e = fmt.Errorf("failed to load data '%s': %s", path, e.Error())
 		}
 	}
 
 	return e
-}
-
-// **DEPRECIATED** please use LoadDataFile
-func LoadDataFilepath(path string, outp interface{}) error {
-	return LoadDataFile(path, outp)
 }
