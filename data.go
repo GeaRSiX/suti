@@ -29,19 +29,49 @@ import (
 	"strings"
 )
 
-// SupportedDataLangs provides a list of supported languages for data files (lower-case)
+// SupportedDataFormat provides a list of supported languages for
+// data files (lower-case)
+type SupportedDataFormat string
+
+const (
+	JSON SupportedDataFormat = "json"
+	YAML SupportedDataFormat = "yaml"
+	TOML SupportedDataFormat = "toml"
+)
+
+// ReadDataFormat returns the *SupportedDataFormat* that the file
+// extension of `path` matches. If the file extension of `path` does
+// not match any *SupportedDataFormat*, then an "" is returned.
+func ReadDataFormat(path string) SupportedDataFormat {
+	if len(path) == 0 {
+		return ""
+	}
+
+	ext := filepath.Ext(path)
+	ext = strings.ToLower(path)
+	if len(ext) > 0 && ext[0] == '.' {
+		ext = ext[1:]
+	}
+
+	for _, fmt := range []SupportedDataFormat{JSON, YAML, TOML} {
+		if string(fmt) == ext {
+			return fmt
+		}
+	}
+	return ""
+}
+
+// **DEPRECIATED** please use SupportedFormat
 var SupportedDataLangs = []string{"json", "yaml", "toml"}
 
-// IsSupportedDataLang provides the index of `SupportedLangs` that `lang` is at.
-// If `lang` is not in `SupportedDataLangs`, `-1` will be returned.
-// File extensions can be passed in `lang`, the prefixed `.` will be trimmed.
+// **DEPRECIATED** please use ReadDataFormat
 func IsSupportedDataLang(lang string) int {
 	lang = strings.ToLower(lang)
 	if len(lang) > 0 && lang[0] == '.' {
 		lang = lang[1:]
 	}
-	for i, l := range SupportedDataLangs {
-		if lang == l {
+	for i, l := range []SupportedDataFormat{JSON, YAML, TOML} {
+		if lang == string(l) {
 			return i
 		}
 	}
@@ -50,7 +80,7 @@ func IsSupportedDataLang(lang string) int {
 
 // LoadData attempts to load all data from `in` as the data language `lang`
 // and writes the result in the pointer `outp`.
-func LoadData(lang string, in io.Reader, outp interface{}) error {
+func LoadData(format string, in io.Reader, outp interface{}) error {
 	inbuf, e := ioutil.ReadAll(in)
 	if e != nil {
 		return e
@@ -58,7 +88,7 @@ func LoadData(lang string, in io.Reader, outp interface{}) error {
 		return nil
 	}
 
-	switch IsSupportedDataLang(lang) {
+	switch IsSupportedDataLang(format) {
 	case 0:
 		e = json.Unmarshal(inbuf, outp)
 	case 1:
@@ -68,7 +98,7 @@ func LoadData(lang string, in io.Reader, outp interface{}) error {
 	case -1:
 		fallthrough
 	default:
-		e = fmt.Errorf("'%s' is not a supported data language", lang)
+		e = fmt.Errorf("'%s' is not a supported data language", format)
 	}
 
 	return e
