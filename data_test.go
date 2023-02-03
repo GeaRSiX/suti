@@ -56,6 +56,35 @@ func TestIsSupportedDataLang(t *testing.T) {
 	}
 }
 
+func TestReadDataFormat(t *testing.T) {
+	exts := []string{
+		".json", "json", "JSON", ".JSON",
+		".yaml", "yaml", "YAML", ".YAML",
+		".toml", "toml", "TOML", ".TOML",
+		".misc", "-", ".", "",
+	}
+
+	for i, ext := range exts {
+		var target SupportedDataFormat
+		
+		if i < 4 {
+			target = JSON
+		} else if i < 8 {
+			target = YAML
+		} else if i < 12 {
+			target = TOML
+		}
+
+		if ReadDataFormat(ext) != target {
+			if target == "" {
+				t.Fatalf("%s is not a supported data language", ext)
+			} else {
+				t.Fatalf("%s did not return %s", ext, target)
+			}
+		}
+	}
+}
+
 var good = map[string]string{
 	"json": `{"eg":0}`,
 	"yaml": `eg: 0
@@ -127,6 +156,10 @@ func TestLoadData(t *testing.T) {
 }
 
 func TestLoadDataFilepath(t *testing.T) {
+	TestLoadDataFile(t)
+}
+
+func TestLoadDataFile(t *testing.T) {
 	var d interface{}
 	var e error
 	var p string
