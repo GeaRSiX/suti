@@ -31,12 +31,42 @@ import (
 	tmpl "text/template"
 )
 
-// SupportedTemplateLangs provides a list of supported languages for template files (lower-case)
+// SupportedTemplateFormat provides a list of supported languages for
+// Template files (lower-case)
+type SupportedTemplateFormat string
+
+const (
+	TMPL SupportedTemplateFormat = "tmpl"
+	HMPL SupportedTemplateFormat = "hmpl"
+	MST  SupportedTemplateFormat = "mst"
+)
+
+// ReadTemplateFormat returns the *SupportedTemplateFormat* that the file
+// extension of `path` matches. If the file extension of `path` does
+// not match any *SupportedTemplateFormat*, then an "" is returned.
+func ReadTemplateFormat(path string) SupportedTemplateFormat {
+	if len(path) == 0 {
+		return ""
+	}
+
+	ext := filepath.Ext(path)
+	ext = strings.ToLower(path)
+	if len(ext) > 0 && ext[0] == '.' {
+		ext = ext[1:]
+	}
+
+	for _, fmt := range []SupportedTemplateFormat{TMPL, HMPL, MST} {
+		if string(fmt) == ext {
+			return fmt
+		}
+	}
+	return ""
+}
+
+// **DEPRECIATED** please use SupportedTemplateFormat
 var SupportedTemplateLangs = []string{"tmpl", "hmpl", "mst"}
 
-// IsSupportedTemplateLang provides the index of `SupportedTemplateLangs` that `lang` is at.
-// If `lang` is not in `SupportedTemplateLangs`, `-1` will be returned.
-// File extensions can be passed in `lang`, the prefixed `.` will be trimmed.
+// **DEPRECIATED** please use ReadTemplateFormat
 func IsSupportedTemplateLang(lang string) int {
 	lang = strings.ToLower(lang)
 	if len(lang) > 0 && lang[0] == '.' {

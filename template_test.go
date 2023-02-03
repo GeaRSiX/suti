@@ -75,6 +75,36 @@ func TestIsSupportedTemplateLang(t *testing.T) {
 	}
 }
 
+func TestReadTemplateFormat(t *testing.T) {
+	exts := []string{
+		".tmpl", "tmpl", "TMPL", ".TMPL",
+		".hmpl", "hmpl", "HMPL", ".HMPL",
+		".mst", "mst", "MST", ".MST",
+		".NONE", "-", ".", "",
+	}
+
+	for i, ext := range exts {
+		var target SupportedTemplateFormat
+		if i < 4 {
+			target = TMPL
+		} else if i < 8 {
+			target = HMPL
+		} else if i < 12 {
+			target = MST
+		} else {
+			target = ""
+		}
+
+		if ReadTemplateFormat(ext) != target {
+			if target == "" {
+				t.Fatalf("%s is not a supported data language", ext)
+			} else {
+				t.Fatalf("%s did not return %s", ext, target)
+			}
+		}
+	}
+}
+
 func validateTemplate(t *testing.T, template Template, templateType string, rootName string, partialNames ...string) {
 	types := map[string]string{
 		"tmpl": "*template.Template",
