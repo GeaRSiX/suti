@@ -26,15 +26,30 @@ import (
 	"testing"
 )
 
-func TestReadDataFormat(t *testing.T) {
-	exts := []string{
-		".json", "json", "JSON", ".JSON",
-		".yaml", "yaml", "YAML", ".YAML",
-		".toml", "toml", "TOML", ".TOML",
-		".misc", "-", ".", "",
-	}
+var dataExts = []string{
+	".json", "json", "JSON", ".JSON",
+	".yaml", "yaml", "YAML", ".YAML",
+	".toml", "toml", "TOML", ".TOML",
+	".misc", "-", ".", "",
+}
 
-	for i, ext := range exts {
+func TestIsDataFormat(t *testing.T) {
+	for i, ext := range dataExts {
+		var target bool
+		
+		if i < 12 {
+			target = true
+		}
+
+		is := IsDataFormat(ext)
+		if is != target {
+			t.Fatalf("%t did not return %t", is, target)
+		}
+	}
+}
+
+func TestReadDataFormat(t *testing.T) {
+	for i, ext := range dataExts {
 		var target DataFormat
 
 		if i < 4 {

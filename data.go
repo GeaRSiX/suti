@@ -39,6 +39,11 @@ const (
 	TOML DataFormat = "toml"
 )
 
+// IsDataFile checks if `path` is one of the known *DatFormat*s.
+func IsDataFormat(path string) bool {
+	return ReadDataFormat(path) != ""
+}
+
 // ReadDataFormat returns the *DataFormat* that the file
 // extension of `path` matches. If the file extension of `path` does
 // not match any *DataFormat*, then an "" is returned.

@@ -45,16 +45,32 @@ const mstResult = `0 0`
 const mstRootBad = `{{> badPartial.mst}}{{#doesnt-exist}}{{/exit}}`
 const mstPartialBad = `p{{$}}{{ > noexist}`
 
-func TestReadTemplateLanguage(t *testing.T) {
-	exts := []string{
-		".tmpl", "tmpl", "TMPL", ".TMPL",
-		".hmpl", "hmpl", "HMPL", ".HMPL",
-		".mst", "mst", "MST", ".MST",
-		".NONE", "-", ".", "",
-	}
+var templateExts = []string{
+	".tmpl", "tmpl", "TMPL", ".TMPL",
+	".hmpl", "hmpl", "HMPL", ".HMPL",
+	".mst", "mst", "MST", ".MST",
+	".NONE", "-", ".", "",
+}
 
-	for i, ext := range exts {
+func TestIsTemplateLanguage(t *testing.T) {
+	for i, ext := range templateExts {
+		var target bool
+		
+		if i < 12 {
+			target = true
+		}
+
+		is := IsTemplateLanguage(ext)
+		if is != target {
+			t.Fatalf("%t did not return %t", is, target)
+		}
+	}
+}
+
+func TestReadTemplateLanguage(t *testing.T) {
+	for i, ext := range templateExts {
 		var target TemplateLanguage
+		
 		if i < 4 {
 			target = TMPL
 		} else if i < 8 {

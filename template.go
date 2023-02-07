@@ -41,6 +41,10 @@ const (
 	MST  TemplateLanguage = "mst"
 )
 
+func IsTemplateLanguage(path string) bool {
+	return ReadTemplateLangauge(path) != ""
+}
+
 // ReadTemplateLanguage returns the *TemplateLanguage* that the file
 // extension of `path` matches. If the file extension of `path` does
 // not match any *TemplateLanguage*, then an "" is returned.
