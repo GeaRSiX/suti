@@ -1,0 +1,13 @@
+v1.2.0
+- add WriteData
+- add WriteDataFile
+- add WriteTemplate
+- add WriteTemplateFile
+
+v1.3.0
+- change ioutil.ReadAll calls to iterative read calls
+
+v2..
+Aim to make api conformative
+  - rename Read* -> Decode*
+  - rename Write* -> Encode*
