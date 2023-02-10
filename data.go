@@ -20,13 +20,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pelletier/go-toml"
-	"gopkg.in/yaml.v3"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pelletier/go-toml"
+	"gopkg.in/yaml.v3"
 )
 
 // DataFormat provides a list of supported languages for
@@ -70,8 +71,8 @@ func ReadDataFormat(path string) DataFormat {
 	return ""
 }
 
-// LoadData attempts to load all data from `in` as the data language `lang`
-// and writes the result in the pointer `outp`.
+// LoadData attempts to load all data from `in` as `format` and writes
+// the result in the pointer `outp`.
 func LoadData(format DataFormat, in io.Reader, outp interface{}) error {
 	inbuf, e := ioutil.ReadAll(in)
 	if e != nil {
@@ -94,9 +95,9 @@ func LoadData(format DataFormat, in io.Reader, outp interface{}) error {
 	return e
 }
 
-// LoadDataFile loads all the data from the file found at `path` into the the
-// format of that files extension (e.g. "x.json" will be loaded as a json).
-// The result is written to the value pointed at by `outp`.
+// LoadDataFile loads all the data from the file found at `path` into
+// the the format of that files extension (e.g. "x.json" will be loaded
+// as a json). The result is written to the value pointed at by `outp`.
 func LoadDataFile(path string, outp interface{}) error {
 	f, e := os.Open(path)
 	defer f.Close()
@@ -108,4 +109,40 @@ func LoadDataFile(path string, outp interface{}) error {
 	}
 
 	return e
+}
+
+// WriteData attempts to write `data` as `format` to `outp`.
+func WriteData(format DataFormat, data interface{}, w io.Writer) error {
+	var err error
+
+	switch format {
+	case JSON:
+		err = json.NewEncoder(w).Encode(data)
+	case YAML:
+		err = yaml.NewEncoder(w).Encode(data)
+	case TOML:
+		err = toml.NewEncoder(w).Encode(data)
+	default:
+		err = fmt.Errorf("'%s' is not a supported data language", format)
+	}
+
+	return err
+}
+
+// WriteDataFile attempts to write `data` as `format` to the file at `path`.
+// If `force` is *true*, then any existing files will be overwritten.
+func WriteDataFile(format DataFormat, data interface{}, path string) (f *os.File, err error) {
+	f, err = os.Open(path)
+	defer f.Close()
+
+	if err == nil {
+		if err = WriteData(format, data, f); err != nil {
+			err = fmt.Errorf("faild to write data '%s': %s", path, err.Error())
+		}
+	}
+	if err != nil {
+		f = nil
+	}
+
+	return
 }

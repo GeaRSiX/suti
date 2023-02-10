@@ -18,12 +18,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 import (
+	"bytes"
 	"encoding/json"
-	"github.com/pelletier/go-toml"
-	"gopkg.in/yaml.v3"
+	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/pelletier/go-toml"
+	"gopkg.in/yaml.v3"
 )
 
 var dataExts = []string{
@@ -36,7 +41,7 @@ var dataExts = []string{
 func TestIsDataFormat(t *testing.T) {
 	for i, ext := range dataExts {
 		var target bool
-		
+
 		if i < 12 {
 			target = true
 		}
@@ -79,7 +84,7 @@ var good = map[DataFormat]string{
 `,
 }
 
-const badData = `{"json"!:2:]}}`
+const badData = `{"json!:2:]}}`
 
 func writeTestFile(t *testing.T, path string, Data string) {
 	f, e := os.Create(path)
@@ -91,11 +96,9 @@ func writeTestFile(t *testing.T, path string, Data string) {
 	if e != nil {
 		t.Skipf("setup failure: %s", e)
 	}
-
-	return
 }
 
-func validateData(t *testing.T, d interface{}, e error, lang DataFormat) {
+func validateLoadData(t *testing.T, d interface{}, e error, lang DataFormat) {
 	var b []byte
 
 	if e != nil {
@@ -125,7 +128,7 @@ func TestLoadData(t *testing.T) {
 
 	for lang, data := range good {
 		e = LoadData(lang, strings.NewReader(data), &d)
-		validateData(t, d, e, lang)
+		validateLoadData(t, d, e, lang)
 	}
 
 	if e = LoadData(JSON, strings.NewReader(badData), &d); e == nil {
@@ -151,7 +154,7 @@ func TestLoadDataFile(t *testing.T) {
 		p = tdir + "/good." + string(lang)
 		writeTestFile(t, p, data)
 		e = LoadDataFile(p, &d)
-		validateData(t, d, e, lang)
+		validateLoadData(t, d, e, lang)
 	}
 
 	p = tdir + "/bad.json"
@@ -171,6 +174,91 @@ func TestLoadDataFile(t *testing.T) {
 	if e = LoadDataFile("non-existing-file.toml", &d); e == nil {
 		t.Fatalf("non-existing file passed: %s, %s", d, e)
 	}
+}
 
-	return
+func validateWriteData(t *testing.T, err error, data string, writer io.Reader) error {
+	if err != nil {
+		return err
+	}
+
+	var buf []byte
+	if _, err = writer.Read(buf); string(buf) != data {
+		err = fmt.Errorf("%s does not match %s", string(buf), data)
+	}
+	return err
+}
+
+func TestWriteData(t *testing.T) {
+	var err error
+	var buf []byte
+	writer := bytes.NewBuffer(buf)
+
+	testGoodData := func(format DataFormat) {
+		writer.Reset()
+		err = WriteData(format, good[format], writer)
+		validateWriteData(t, err, good[format], writer)
+	}
+
+	testEmptyData := func(format DataFormat) {
+		writer.Reset()
+		err = WriteData(format, "", writer)
+		validateWriteData(t, err, "", writer)
+	}
+
+	testBadFormat := func() {
+		writer.Reset()
+		if err = WriteData("", good[JSON], writer); err == nil {
+			t.Errorf("invalid data format passed")
+		}
+	}
+
+	for _, format := range []DataFormat{JSON, TOML, YAML} {
+		testGoodData(format)
+		testEmptyData(format)
+	}
+	testBadFormat()
+}
+
+func TestWriteDataFile(t *testing.T) {
+	var err error
+	var path string
+	var file *os.File
+	dir := os.TempDir()
+
+	testGoodData := func(format DataFormat) {
+		path = filepath.Join(dir, "good."+string(format))
+		file, err = WriteDataFile(format, good[format], path)
+		validateWriteData(t, err, good[format], file)
+	}
+
+	testEmptyData := func(format DataFormat) {
+		path = filepath.Join(dir, "empty."+string(format))
+		file, err = WriteDataFile(format, nil, path)
+		validateWriteData(t, err, good[format], file)
+	}
+
+	testBadData := func(format DataFormat) {
+		path = filepath.Join(dir, "bad."+string(format))
+		if file, err = WriteDataFile(format, badData, path); err == nil {
+			t.Errorf("'%s': bad data passed\n", string(format))
+		} else if file != nil {
+			t.Errorf("'%s': file is not nil\n", string(format))
+		}
+	}
+
+	testBadFormat := func() {
+		path = filepath.Join(dir, "bad")
+		if file, err = WriteDataFile("", nil, path); err == nil {
+			t.Errorf("bad format passed")
+		} else if file != nil {
+			t.Error("file is not nil")
+		}
+	}
+
+	for _, format := range []DataFormat{JSON, YAML, TOML} {
+		testGoodData(format)
+		testEmptyData(format)
+		testBadData(format)
+	}
+	testBadFormat()
 }
