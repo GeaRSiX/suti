@@ -11,3 +11,4 @@ v2..
 Aim to make api conformative
   - rename Read* -> Decode*
   - rename Write* -> Encode*
+  - remove file.go ? not used anymore

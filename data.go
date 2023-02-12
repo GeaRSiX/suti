@@ -1,7 +1,7 @@
 package dati
 
 /*
-Copyright (C) 2021 gearsix <gearsix@tuta.io>
+Copyright (C) 2023 gearsix <gearsix@tuta.io>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -72,43 +72,43 @@ func ReadDataFormat(path string) DataFormat {
 }
 
 // LoadData attempts to load all data from `in` as `format` and writes
-// the result in the pointer `outp`.
-func LoadData(format DataFormat, in io.Reader, outp interface{}) error {
-	inbuf, e := ioutil.ReadAll(in)
-	if e != nil {
-		return e
+// the result in the pointer `out`.
+func LoadData(format DataFormat, in io.Reader, out interface{}) error {
+	inbuf, err := ioutil.ReadAll(in)
+	if err != nil {
+		return err
 	} else if len(inbuf) == 0 {
 		return nil
 	}
 
 	switch format {
 	case JSON:
-		e = json.Unmarshal(inbuf, outp)
+		err = json.Unmarshal(inbuf, out)
 	case YAML:
-		e = yaml.Unmarshal(inbuf, outp)
+		err = yaml.Unmarshal(inbuf, out)
 	case TOML:
-		e = toml.Unmarshal(inbuf, outp)
+		err = toml.Unmarshal(inbuf, out)
 	default:
-		e = fmt.Errorf("'%s' is not a supported data language", format)
+		err = fmt.Errorf("'%s' is not a supported data language", format)
 	}
 
-	return e
+	return err
 }
 
 // LoadDataFile loads all the data from the file found at `path` into
 // the the format of that files extension (e.g. "x.json" will be loaded
 // as a json). The result is written to the value pointed at by `outp`.
 func LoadDataFile(path string, outp interface{}) error {
-	f, e := os.Open(path)
-	defer f.Close()
+	file, err := os.Open(path)
+	defer file.Close()
 
-	if e == nil {
-		if e = LoadData(ReadDataFormat(path), f, outp); e != nil {
-			e = fmt.Errorf("failed to load data '%s': %s", path, e.Error())
+	if err == nil {
+		if err = LoadData(ReadDataFormat(path), file, outp); err != nil {
+			err = fmt.Errorf("failed to load data '%s': %s", path, err.Error())
 		}
 	}
 
-	return e
+	return err
 }
 
 // WriteData attempts to write `data` as `format` to `outp`.
