@@ -29,28 +29,34 @@ DESCRIPTION
 OPTIONS
 -------
 
-  - `-r path`, `-root path` = path of template file to execute against.
-  - `-p path...`, `-partial path...`= path of (multiple) template files that are
-  called upon by at least one root template.
-    - If a directory is passed then all files within that directory will
-    (recursively) be loaded.
-  - `-gd path...`, `-global-data path...` = path of (multiple) data files to load
-  as "global data". If a directory is passed then all files within that directory
-  will (recursively) be loaded.
-  - `-d path...`, `-data path...` = path of (multiple) data files to load as
-  "data". If a directory is passed then all files within that directory will
+  - **-r**, **-root** *PATH*<br/>
+  Path of the root template file to execute against.
+
+  - **-p**, **-partial** *PATH ...*<br/>
+  Path of (multiple) template files that are called upon by at least
+  one root template
+    - If a directory is passed then all files within that directory
+	will (recursively) be loaded.
+
+  - **-gd**, **-global-data** *PATH ...*<br/>
+  Path of (multiple) data files to load as "global data".
+  If a directory is passed then all files within that directory will
   (recursively) be loaded.
-  - `-dk name`, `-data-key name` = set the name of the key used for the generated
-  array of data (default: "data")
-  - `-sd attribute`, `-sort-data attribute` = The file attribute to order data
-  files by. If no value is provided, the data will be provided in the order it's
-  loaded.
-    - Accepted values: "filename", "modified".
-    - A suffix can be appended to each value to set the sort order: "-asc" (for
-    ascending), "-desc" (for descending). If not specified, this defaults to
-    "-asc".
-  - `-cfg file`, `-config file` = A data file to provide default values for the
-  above options (see CONFIG).
+
+  - **-dk**, **-data-key** *NAME*<br/>
+  Set the name of the key used for the generated array of data. The
+  default *data key* is "data".
+
+  - **-sd**, **-sort-data** *ATTRIBUTE*<br/>
+  The file attribute to order data files by. If no value is provided,
+  the data will be provided in the order it's loaded.
+    - *Accepted values*: "filename", "modified".
+    - A suffix can be appended to each value to set the sort order:
+	"-asc" (for ascending), "-desc" (for descending).
+	If not specified, this defaults to "-asc".
+
+  - **-cfg** **-config** *FILE*<br/>
+  A data file to provide default values for the above options (CONFIG).
 
 CONFIG
 ------
@@ -96,8 +102,8 @@ TEMPLATES
   All "parital" templates will be parsed into any "root" templates that have a
   file extension that match the same templating language.
 
-SUPPORTED LANGUAGES
--------------------
+SUPPORTED FORMATS / LANGUAGES
+-----------------------------
 
   Below is a list of the supported data-serialisation languages, used for
   "data" and "global data" files.
@@ -115,7 +121,7 @@ SUPPORTED LANGUAGES
     - note that this and text/template are almost interchangable, with the
     exception that html/template will produce "HTML output safe against code
     injection".
-  - statix (.stx .statix), see https://gist.github.com/plugnburn/c2f7cc3807e8934b179e
+<!--  - statix (.stx .statix), see https://gist.github.com/plugnburn/c2f7cc3807e8934b179e -->
 
 EXAMPLES
 --------
@@ -141,3 +147,4 @@ AUTHORS
 -------
 
   - gearsix <gearsix@tuta.io>
+
