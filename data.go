@@ -34,11 +34,21 @@ import (
 // data files (lower-case)
 type DataFormat string
 
+// String returns the typical file extension used to
+// represent `df`
+func (df DataFormat) String() string {
+	return string(df)
+}
+
 const (
 	JSON DataFormat = "json"
 	YAML DataFormat = "yaml"
 	TOML DataFormat = "toml"
 )
+
+var ErrUnsupportedData = func(format string) error {
+	return fmt.Errorf("data format '%s' is not supported", format)
+}
 
 // IsDataFile checks if `path` is one of the known *DatFormat*s.
 func IsDataFormat(path string) bool {
@@ -64,7 +74,7 @@ func ReadDataFormat(path string) DataFormat {
 	}
 
 	for _, fmt := range []DataFormat{JSON, YAML, TOML} {
-		if string(fmt) == ext {
+		if fmt.String() == ext {
 			return fmt
 		}
 	}
@@ -89,7 +99,7 @@ func LoadData(format DataFormat, in io.Reader, out interface{}) error {
 	case TOML:
 		err = toml.Unmarshal(inbuf, out)
 	default:
-		err = fmt.Errorf("'%s' is not a supported data language", format)
+		err = ErrUnsupportedData(format.String())
 	}
 
 	return err
@@ -100,15 +110,12 @@ func LoadData(format DataFormat, in io.Reader, out interface{}) error {
 // as a json). The result is written to the value pointed at by `outp`.
 func LoadDataFile(path string, outp interface{}) error {
 	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
 	defer file.Close()
 
-	if err == nil {
-		if err = LoadData(ReadDataFormat(path), file, outp); err != nil {
-			err = fmt.Errorf("failed to load data '%s': %s", path, err.Error())
-		}
-	}
-
-	return err
+	return LoadData(ReadDataFormat(path), file, outp)
 }
 
 // WriteData attempts to write `data` as `format` to `outp`.
@@ -123,7 +130,7 @@ func WriteData(format DataFormat, data interface{}, w io.Writer) error {
 	case TOML:
 		err = toml.NewEncoder(w).Encode(data)
 	default:
-		err = fmt.Errorf("'%s' is not a supported data language", format)
+		err = ErrUnsupportedData(format.String())
 	}
 
 	return err
@@ -132,15 +139,12 @@ func WriteData(format DataFormat, data interface{}, w io.Writer) error {
 // WriteDataFile attempts to write `data` as `format` to the file at `path`.
 // If `force` is *true*, then any existing files will be overwritten.
 func WriteDataFile(format DataFormat, data interface{}, path string) (f *os.File, err error) {
-	f, err = os.Open(path)
+	if f, err = os.Open(path); err != nil {
+		return
+	}
 	defer f.Close()
 
-	if err == nil {
-		if err = WriteData(format, data, f); err != nil {
-			err = fmt.Errorf("faild to write data '%s': %s", path, err.Error())
-		}
-	}
-	if err != nil {
+	if err = WriteData(format, data, f); err != nil {
 		f = nil
 	}
 

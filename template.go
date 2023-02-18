@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	hmpl "html/template"
 	"io"
@@ -36,12 +37,31 @@ import (
 // Template files (lower-case)
 type TemplateLanguage string
 
+func (t TemplateLanguage) String() string {
+	return string(t)
+}
+
 const (
 	TMPL TemplateLanguage = "tmpl"
 	HMPL TemplateLanguage = "hmpl"
 	MST  TemplateLanguage = "mst"
 )
 
+var (
+	ErrUnsupportedTemplate = func(format string) error {
+		return fmt.Errorf("template language '%s' is not supported", format)
+	}
+	ErrUnknownTemplateType = func(templateType string) error {
+		return fmt.Errorf("unable to infer template type '%s'", templateType)
+	}
+	ErrRootPathIsDir = func(path string) error {
+		return fmt.Errorf("rootPath path must be a file, not a directory (%s)", path)
+	}
+	ErrNilTemplate = errors.New("template is nil")
+)
+
+// IsTemplateLanguage will return a bool if the file found at `path`
+// is a known *TemplateLanguage*, based upon it's file extension.
 func IsTemplateLanguage(path string) bool {
 	return ReadTemplateLangauge(path) != ""
 }
@@ -65,7 +85,7 @@ func ReadTemplateLangauge(path string) TemplateLanguage {
 	}
 
 	for _, fmt := range []TemplateLanguage{TMPL, HMPL, MST} {
-		if string(fmt) == ext {
+		if fmt.String() == ext {
 			return fmt
 		}
 	}
@@ -91,7 +111,7 @@ func (t *Template) Execute(data interface{}) (result bytes.Buffer, err error) {
 	var params []reflect.Value
 	tType := reflect.TypeOf(t.T)
 	if tType == nil {
-		err = fmt.Errorf("template.T is nil")
+		err = ErrNilTemplate
 		return
 	}
 	switch tType.String() {
@@ -102,7 +122,7 @@ func (t *Template) Execute(data interface{}) (result bytes.Buffer, err error) {
 		funcName = "FRender"
 		params = []reflect.Value{reflect.ValueOf(&result), reflect.ValueOf(data)}
 	default:
-		err = fmt.Errorf("unable to infer template type '%s'", reflect.TypeOf(t.T).String())
+		err = ErrUnknownTemplateType(reflect.TypeOf(t.T).String())
 	}
 
 	if err == nil {
@@ -123,7 +143,7 @@ func LoadTemplateFile(rootPath string, partialPaths ...string) (t Template, err 
 	if stat, err = os.Stat(rootPath); err != nil {
 		return
 	} else if stat.IsDir() {
-		err = fmt.Errorf("rootPath path must be a file, not a directory: %s", rootPath)
+		err = ErrRootPathIsDir(rootPath)
 		return
 	}
 
@@ -171,12 +191,11 @@ func LoadTemplateString(lang TemplateLanguage, rootName string, root string, par
 	return LoadTemplate(lang, rootName, strings.NewReader(root), p)
 }
 
-// LoadTemplate loads a Template from `root` of type `lang`, named
-// `name`. `lang` must be an element in `SupportedTemplateLangs`.
+// LoadTemplate loads a Template from `root` of type `lang`, named `name`.
+// `lang` must be an element in `SupportedTemplateLangs`.
 // `name` is optional, if empty the template name will be "template".
-// `root` should be a string of template, with syntax matching that of
-// `lang`. `partials` should be a string of template, with syntax
-// matching that of `lang`.
+// `root` should be a string of template, with syntax matching that of `lang`.
+// `partials` should be a string of template, with syntax matching that of `lang`.
 func LoadTemplate(lang TemplateLanguage, rootName string, root io.Reader, partials map[string]io.Reader) (t Template, err error) {
 	t.Name = rootName
 
@@ -188,7 +207,7 @@ func LoadTemplate(lang TemplateLanguage, rootName string, root io.Reader, partia
 	case MST:
 		t.T, err = loadTemplateMst(rootName, root, partials)
 	default:
-		err = fmt.Errorf("'%s' is not a supported template language", lang)
+		err = ErrUnsupportedTemplate(lang.String())
 	}
 
 	return
