@@ -1,8 +1,38 @@
 # CHANGELOG
 
+# v1.2.2
+
+- Added standardised package errors:
+  `ErrUnsupportedData`, `ErrUnsupportedTemplate`, `ErrUnsupportedTemplateType`, `ErrRootPathIsDir`, `ErrNilTemplate`.
+- Minor improvements to comment docs in a few places
+- Formatting changes to README.md
+- Added some TODO items
+
+# v1.2.1
+
+- updated LICENSE dates
+- added `DataWrite` and `DataWriteFile` (with passing tests)
+- added TODO file
+- Renamed some parameters (more uniform & sensical)
+- Renamed a few variables (`err` not `e`)
+
+# v1.1.0
+
+- Added `IsDataFormat` and `IsTemplateLanguage` (with passing tests)
+
+# v1.0.0
+
+- Depreciated functions were removed
+- Fix to ReadDataFormat and ReadTemplateLanguage
+- Updated cmd/dati.go to use new functions
+- Renamed examples/suti.cfg to examples/dati.cfg (fixed dati_test)
+
 ## v0.8.0
 
 - rebranded to dati - data and template interface
+- Added `LoadDataFile`, depreciated `LoadDataFilepath`
+- Added `DataFormat`, `ReadDataFormat` depreciated `SupportedDataLangs`, `IsSupportedDataLang`
+- Added `TemplateLanguage`, `ReadTemplateLanguage` depreciated `SupportedTemplateLangs`, `IsSupportedTemplate`
 
 ## v0.7.0
 
