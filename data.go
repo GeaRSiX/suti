@@ -93,11 +93,15 @@ func LoadData(format DataFormat, in io.Reader, out interface{}) error {
 
 	switch format {
 	case JSON:
-		err = json.Unmarshal(inbuf, out)
+		if err = json.Unmarshal(inbuf, out); err != nil {
+			err = fmt.Errorf("%s: %s", JSON, err.Error())
+		}
 	case YAML:
 		err = yaml.Unmarshal(inbuf, out)
 	case TOML:
-		err = toml.Unmarshal(inbuf, out)
+		if err = toml.Unmarshal(inbuf, out); err != nil {
+			err = fmt.Errorf("%s %s", TOML, err.Error())
+		}
 	default:
 		err = ErrUnsupportedData(format.String())
 	}
@@ -124,11 +128,15 @@ func WriteData(format DataFormat, data interface{}, w io.Writer) error {
 
 	switch format {
 	case JSON:
-		err = json.NewEncoder(w).Encode(data)
+		if err = json.NewEncoder(w).Encode(data); err != nil {
+			err = fmt.Errorf("%s: %s", JSON, err.Error())
+		}
 	case YAML:
 		err = yaml.NewEncoder(w).Encode(data)
 	case TOML:
-		err = toml.NewEncoder(w).Encode(data)
+		if err = toml.NewEncoder(w).Encode(data); err != nil {
+			err = fmt.Errorf("%s %s", TOML, err.Error())
+		}
 	default:
 		err = ErrUnsupportedData(format.String())
 	}
