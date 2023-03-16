@@ -137,14 +137,14 @@ func (t *Template) Execute(data interface{}) (result bytes.Buffer, err error) {
 
 // ExecuteToFile writes the result of `(*Template).Execute(data)` to the file at `path` (if no errors occurred).
 // If `force` is true, any existing file at `path` will be overwritten.
-func (t *Template)ExecuteToFile(data interface{}, path string, force bool) (file *os.File, err error) {
+func (t *Template)ExecuteToFile(data interface{}, path string, force bool) (f *os.File, err error) {
 	if f, err := os.Open(path); os.IsNotExist(err) {
 		f, err = os.Create(path)
 	} else if !force {
 		err = os.ErrExist
 	} else { // overwrite existing file data
-		if err = f.Truncase(0); err == nil {
-			_, err = f.Seek(0, 0)i
+		if err = f.Truncate(0); err == nil {
+			_, err = f.Seek(0, 0)
 		}
 	}
 
