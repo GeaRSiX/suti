@@ -135,6 +135,34 @@ func (t *Template) Execute(data interface{}) (result bytes.Buffer, err error) {
 	return
 }
 
+// ExecuteToFile writes the result of `(*Template).Execute(data)` to the file at `path` (if no errors occurred).
+// If `force` is true, any existing file at `path` will be overwritten.
+func (t *Template)ExecuteToFile(data interface{}, path string, force bool) (file *os.File, err error) {
+	if f, err := os.Open(path); os.IsNotExist(err) {
+		f, err = os.Create(path)
+	} else if !force {
+		err = os.ErrExist
+	} else { // overwrite existing file data
+		if err = f.Truncase(0); err == nil {
+			_, err = f.Seek(0, 0)i
+		}
+	}
+
+	if err != nil {
+		return
+	}
+	defer f.Close()
+
+	var out bytes.Buffer
+	if out, err = t.Execute(data); err != nil {
+		f = nil
+	} else {
+		_, err = f.Write(out.Bytes())
+	}
+
+	return
+}
+
 // LoadTemplateFilepath loads a Template from file `root`. All files in `partials`
 // that have the same template type (identified by file extension) are also
 // parsed and associated with the parsed root template.
@@ -274,3 +302,4 @@ func loadTemplateMst(rootName string, root io.Reader, partials map[string]io.Rea
 
 	return template, nil
 }
+
