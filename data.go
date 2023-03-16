@@ -146,8 +146,18 @@ func WriteData(format DataFormat, data interface{}, w io.Writer) error {
 
 // WriteDataFile attempts to write `data` as `format` to the file at `path`.
 // If `force` is *true*, then any existing files will be overwritten.
-func WriteDataFile(format DataFormat, data interface{}, path string) (f *os.File, err error) {
-	if f, err = os.Open(path); err != nil {
+func WriteDataFile(format DataFormat, data interface{}, path string, force bool) (f *os.File, err error) {
+	if f, err = os.Open(path); os.IsNotExist(err) {
+		f, err = os.Create(path)
+	} else if !force {
+		err = os.ErrExist
+	} else { // overwrite existing file data
+		if err = f.Truncate(0); err == nil {
+			_, err = f.Seek(0, 0)
+		}
+	}
+
+	if err != nil  {
 		return
 	}
 	defer f.Close()
