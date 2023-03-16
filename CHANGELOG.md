@@ -1,11 +1,8 @@
 # CHANGELOG
 
-## v1.2.4
+## v1.3.0
 
 - added (*Template).ExecuteToFile
-
-## v1.2.3
-
 - made sure the errors returned by `LoadData` and `WriteData` always indicates the DataFormat being parsed. 
 - Added 'force' param to `WriteFileData`
 - Bugfix in `WriteFileData`, now it creates non-existing files
