@@ -151,7 +151,6 @@ func (t *Template)ExecuteToFile(data interface{}, path string, force bool) (f *o
 	if err != nil {
 		return
 	}
-	defer f.Close()
 
 	var out bytes.Buffer
 	if out, err = t.Execute(data); err != nil {
