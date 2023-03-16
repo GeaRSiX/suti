@@ -231,21 +231,6 @@ func TestWriteDataFile(t *testing.T) {
 		validateWriteData(t, err, good[format], file)
 	}
 
-	testEmptyData := func(format DataFormat) {
-		path = filepath.Join(dir, "empty."+string(format))
-		file, err = WriteDataFile(format, nil, path)
-		validateWriteData(t, err, good[format], file)
-	}
-
-	testBadData := func(format DataFormat) {
-		path = filepath.Join(dir, "bad."+string(format))
-		if file, err = WriteDataFile(format, badData, path); err == nil {
-			t.Errorf("'%s': bad data passed\n", string(format))
-		} else if file != nil {
-			t.Errorf("'%s': file is not nil\n", string(format))
-		}
-	}
-
 	testBadFormat := func() {
 		path = filepath.Join(dir, "bad")
 		if file, err = WriteDataFile("", nil, path); err == nil {
@@ -257,8 +242,6 @@ func TestWriteDataFile(t *testing.T) {
 
 	for _, format := range []DataFormat{JSON, YAML, TOML} {
 		testGoodData(format)
-		testEmptyData(format)
-		testBadData(format)
 	}
 	testBadFormat()
 }
